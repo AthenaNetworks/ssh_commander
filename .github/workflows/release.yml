@@ -76,10 +76,16 @@ jobs:
     - name: Generate SHA256 checksums
       run: |
         cd release
-        if [ "${{ matrix.platform }}" = "windows" ]; then
-          sha256sum ${{ matrix.asset_name }}.zip > ${{ matrix.asset_name }}.zip.sha256
+        if [ "$(uname)" = "Darwin" ]; then
+          CHECKSUM_CMD="shasum -a 256"
         else
-          sha256sum ${{ matrix.asset_name }}.tar.gz > ${{ matrix.asset_name }}.tar.gz.sha256
+          CHECKSUM_CMD="sha256sum"
+        fi
+        
+        if [ "${{ matrix.platform }}" = "windows" ]; then
+          $CHECKSUM_CMD ${{ matrix.asset_name }}.zip > ${{ matrix.asset_name }}.zip.sha256
+        else
+          $CHECKSUM_CMD ${{ matrix.asset_name }}.tar.gz > ${{ matrix.asset_name }}.tar.gz.sha256
         fi
       shell: bash
 

@@ -1,0 +1,10 @@
+# Server configurations
+# You can use either password or key-based authentication
+- hostname: server1.example.com
+  username: user1
+  key_file: ~/.ssh/id_rsa  # For key-based authentication
+
+- hostname: server2.example.com
+  username: user2
+  password: your_password  # For password-based authentication
+  port: 2222  # Optional custom port

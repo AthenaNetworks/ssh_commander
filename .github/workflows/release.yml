@@ -105,6 +105,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential debhelper dh-python python3-all python3-setuptools python3-pip python3-paramiko python3-yaml python3-colorama
         
+        # Fix pip permissions
+        sudo chown -R $USER:$USER ~/.cache/pip
+        
         # Build the package
         dpkg-buildpackage -us -uc -b
         

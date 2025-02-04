@@ -37,6 +37,37 @@ class SSHCommander:
             "servers.yaml"  # Local directory
         ]
         return [p for p in paths if p != self.config_file]
+        
+    def _get_writable_config_path(self) -> str:
+        """Get the first writable config path from the list of possible paths.
+        
+        Returns:
+            str: The path to use for saving the config file.
+        """
+        config_paths = self._get_config_paths()
+        
+        for path in config_paths:
+            parent_dir = os.path.dirname(path)
+            if not parent_dir:  # Current directory
+                return path
+                
+            # Check if parent directory exists and is writable
+            if os.path.exists(parent_dir):
+                if os.access(parent_dir, os.W_OK):
+                    return path
+            else:
+                # If parent directory doesn't exist, check if we can create it
+                try:
+                    # Try to create parent directory
+                    os.makedirs(parent_dir, exist_ok=True)
+                    return path
+                except PermissionError:
+                    continue
+        
+        # If no system paths are writable, fall back to user config directory
+        user_config_dir = os.path.expanduser("~/.config/ssh-commander")
+        os.makedirs(user_config_dir, exist_ok=True)
+        return os.path.join(user_config_dir, "servers.yaml")
 
     def _load_servers(self) -> List[Dict]:
         """Load server configurations from YAML file."""
@@ -97,15 +128,15 @@ class SSHCommander:
     def run_command_on_all(self, command: str):
         """Execute a command on all servers."""
         for server in self.servers:
-            print(f"\n{Back.BLUE}{Fore.WHITE} Executing on {server['hostname']} {Style.RESET_ALL}")
+            print(f"\n{Fore.LIGHTBLUE_EX}Executing on {server['hostname']}{Style.RESET_ALL}")
             output, error = self.execute_command(server, command)
             
             if output:
-                print(f"{Fore.GREEN}Output:{Style.RESET_ALL}")
-                print(f"{Fore.CYAN}{output}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTGREEN_EX}Output:{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTCYAN_EX}{output}{Style.RESET_ALL}")
             if error:
-                print(f"{Fore.RED}Error:{Style.RESET_ALL}")
-                print(f"{Fore.RED}{error}{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTRED_EX}Error:{Style.RESET_ALL}")
+                print(f"{Fore.LIGHTRED_EX}{error}{Style.RESET_ALL}")
 
     def run_commands_from_file(self, command_file: str):
         """Execute commands from a file on all servers."""
@@ -155,33 +186,26 @@ class SSHCommander:
     def list_servers(self):
         """List all configured servers."""
         if not self.servers:
-            print(f"{Fore.YELLOW}No servers configured.{Style.RESET_ALL}")
+            print(f"{Fore.LIGHTYELLOW_EX}No servers configured.{Style.RESET_ALL}")
             return
         
-        print(f"\n{Fore.GREEN}Configured Servers:{Style.RESET_ALL}")
+        print(f"\n{Fore.LIGHTGREEN_EX}Configured Servers:{Style.RESET_ALL}")
         for i, server in enumerate(self.servers, 1):
-            print(f"\n{Fore.CYAN}{i}. {Back.CYAN}{Fore.WHITE} {server['hostname']} {Style.RESET_ALL}")
-            print(f"   {Fore.BLUE}Username:{Style.RESET_ALL} {server['username']}")
+            print(f"\n{Fore.LIGHTCYAN_EX}{i}. {server['hostname']}{Style.RESET_ALL}")
+            print(f"   {Fore.LIGHTBLUE_EX}Username:{Style.RESET_ALL} {server['username']}")
             auth_type = 'Key' if 'key_file' in server else 'Password'
-            auth_color = Fore.GREEN if 'key_file' in server else Fore.YELLOW
-            print(f"   {Fore.BLUE}Auth Type:{Style.RESET_ALL} {auth_color}{auth_type}{Style.RESET_ALL}")
+            auth_color = Fore.LIGHTGREEN_EX if 'key_file' in server else Fore.LIGHTYELLOW_EX
+            print(f"   {Fore.LIGHTBLUE_EX}Auth Type:{Style.RESET_ALL} {auth_color}{auth_type}{Style.RESET_ALL}")
             if 'port' in server:
-                print(f"   {Fore.BLUE}Port:{Style.RESET_ALL} {server['port']}")
+                print(f"   {Fore.LIGHTBLUE_EX}Port:{Style.RESET_ALL} {server['port']}")
 
     def _save_servers(self):
         """Save the current server configuration to file.
         
-        Uses the first available config path from _get_config_paths().
-        Creates parent directories if they don't exist.
+        Uses the first writable config path, falling back to user config
+        directory if system paths are not writable.
         """
-        config_paths = self._get_config_paths()
-        save_path = config_paths[0]  # Use first path (highest priority)
-        
-        # Create parent directories if they don't exist
-        parent_dir = os.path.dirname(save_path)
-        if parent_dir:
-            os.makedirs(parent_dir, exist_ok=True)
-            
+        save_path = self._get_writable_config_path()
         with open(save_path, 'w') as f:
             yaml.safe_dump(self.servers, f)
 

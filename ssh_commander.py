@@ -17,14 +17,37 @@ class SSHCommander:
         self.config_file = config_file
         self.servers = self._load_servers()
 
+    def _get_config_paths(self) -> List[str]:
+        """Get list of possible config file paths in order of preference."""
+        paths = [
+            self.config_file,  # User-specified path or default
+            "/etc/ssh-commander/servers.yaml",  # System-wide config
+            os.path.expanduser("~/.config/ssh-commander/servers.yaml"),  # User config
+            "servers.yaml"  # Local directory
+        ]
+        return [p for p in paths if p != self.config_file]
+
     def _load_servers(self) -> List[Dict]:
         """Load server configurations from YAML file."""
-        if not os.path.exists(self.config_file):
-            print(f"Error: Config file {self.config_file} not found")
-            sys.exit(1)
-        
-        with open(self.config_file, 'r') as f:
-            return yaml.safe_load(f)
+        # First try the specified config file
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as f:
+                return yaml.safe_load(f)
+
+        # Try standard locations
+        for config_path in self._get_config_paths():
+            if os.path.exists(config_path):
+                print(f"Using config file: {config_path}")
+                self.config_file = config_path
+                with open(config_path, 'r') as f:
+                    return yaml.safe_load(f)
+
+        print("Error: No config file found in standard locations:")
+        print(f"  - {self.config_file} (specified path)")
+        print("  - /etc/ssh-commander/servers.yaml")
+        print("  - ~/.config/ssh-commander/servers.yaml")
+        print("  - ./servers.yaml")
+        sys.exit(1)
 
     def execute_command(self, server: Dict, command: str) -> tuple:
         """Execute a single command on a server and return the output."""

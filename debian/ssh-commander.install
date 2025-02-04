@@ -1,0 +1,2 @@
+dist/ssh-commander-linux-x64 usr/bin/ssh-commander
+servers.yaml.example etc/ssh-commander/servers.yaml.example

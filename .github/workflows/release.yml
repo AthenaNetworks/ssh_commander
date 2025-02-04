@@ -16,6 +16,7 @@ jobs:
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
+            build_deb: true
           - os: ubuntu-latest
             platform: linux
             arch: arm64
@@ -93,6 +94,14 @@ jobs:
         
         # Cleanup
         Remove-Item -Path ssh-commander -Recurse -Force
+
+    - name: Build Debian Package
+      if: matrix.build_deb
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y debhelper dh-python python3-all
+        dpkg-buildpackage -us -uc -b
+        cp ../ssh-commander_*.deb release/
 
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'

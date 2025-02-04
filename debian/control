@@ -1,0 +1,11 @@
+Package: ssh-commander
+Version: 1.0.6
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: python3 (>= 3.8), python3-paramiko, python3-yaml, python3-colorama
+Maintainer: Your Name <your.email@example.com>
+Description: SSH Command Execution Tool
+ A command-line tool for executing SSH commands across multiple servers
+ simultaneously. Supports both password and key-based authentication,
+ and can execute commands from both command line and files.

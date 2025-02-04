@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	pyinstaller --onefile --name ssh-commander-linux-x64 ssh_commander.py
+
+override_dh_auto_install:
+	dh_install
+
+override_dh_strip:
+	# Skip stripping binary (PyInstaller binary)
+	true
+
+override_dh_shlibdeps:
+	# Skip shared library dependency calculation (PyInstaller handles this)
+	true

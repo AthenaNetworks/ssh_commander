@@ -1,0 +1,145 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            asset_name: ssh-commander-linux-x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
+            asset_name: ssh-commander-linux-arm64
+          - os: macos-latest
+            platform: macos
+            arch: x64
+            asset_name: ssh-commander-macos-x64
+          - os: macos-14
+            platform: macos
+            arch: arm64
+            asset_name: ssh-commander-macos-arm64
+          - os: windows-latest
+            platform: windows
+            arch: x64
+            asset_name: ssh-commander-windows-x64
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build with PyInstaller
+      run: |
+        if [ "${{ matrix.platform }}" = "windows" ]; then
+          pyinstaller --onefile --name ${{ matrix.asset_name }} ssh_commander.py
+        else
+          pyinstaller --onefile --name ${{ matrix.asset_name }} ssh_commander.py
+        fi
+      shell: bash
+        
+    - name: Package Release
+      run: |
+        mkdir -p release
+        if [ "${{ matrix.platform }}" = "windows" ]; then
+          cp dist/${{ matrix.asset_name }}.exe release/
+          cp servers.yaml.example release/
+          cp README.md release/
+          cd release
+          zip ${{ matrix.asset_name }}.zip ${{ matrix.asset_name }}.exe servers.yaml.example README.md
+        else
+          cp dist/${{ matrix.asset_name }} release/
+          cp servers.yaml.example release/
+          cp README.md release/
+          cd release
+          tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md
+        fi
+      shell: bash
+
+    - name: Generate SHA256 checksums
+      run: |
+        cd release
+        if [ "${{ matrix.platform }}" = "windows" ]; then
+          sha256sum ${{ matrix.asset_name }}.zip > ${{ matrix.asset_name }}.zip.sha256
+        else
+          sha256sum ${{ matrix.asset_name }}.tar.gz > ${{ matrix.asset_name }}.tar.gz.sha256
+        fi
+      shell: bash
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.asset_name }}-artifacts
+        path: |
+          release/*.tar.gz
+          release/*.zip
+          release/*.sha256
+        if-no-files-found: error
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+          
+      - name: Create Release Notes
+        run: |
+          echo "# SSH Commander ${GITHUB_REF_NAME}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "1. Download the appropriate archive for your platform:" >> release_notes.md
+          echo "   - macOS ARM64: \`ssh-commander-macos-arm64.tar.gz\`" >> release_notes.md
+          echo "   - macOS x64: \`ssh-commander-macos-x64.tar.gz\`" >> release_notes.md
+          echo "   - Linux x64: \`ssh-commander-linux-x64.tar.gz\`" >> release_notes.md
+          echo "   - Linux ARM64: \`ssh-commander-linux-arm64.tar.gz\`" >> release_notes.md
+          echo "   - Windows x64: \`ssh-commander-windows-x64.zip\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "2. Extract the archive" >> release_notes.md
+          echo "3. Run the installation script:" >> release_notes.md
+          echo "   \`\`\`bash" >> release_notes.md
+          echo "   ./install.sh" >> release_notes.md
+          echo "   \`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## SHA256 Checksums" >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+          cat artifacts/*.sha256 >> release_notes.md
+          echo "\`\`\`" >> release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.zip
+            artifacts/*.sha256
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

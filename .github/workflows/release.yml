@@ -60,18 +60,21 @@ jobs:
       if: matrix.platform != 'windows'
       run: |
         # Create a clean directory for the release
-        rm -rf release
+        rm -rf release ssh-commander
         mkdir -p release
         
-        # Create the package directory
-        mkdir -p ssh-commander-pkg
-        cp dist/${{ matrix.asset_name }} ssh-commander-pkg/
-        cp servers.yaml.example ssh-commander-pkg/
-        cp README.md ssh-commander-pkg/
-        cp install.sh ssh-commander-pkg/
+        # Create the package directory with correct name
+        mkdir -p ssh-commander
+        cp dist/${{ matrix.asset_name }} ssh-commander/
+        cp servers.yaml.example ssh-commander/
+        cp README.md ssh-commander/
+        cp install.sh ssh-commander/
         
-        # Create the archive from outside the directory
-        tar -czf release/${{ matrix.asset_name }}.tar.gz --transform 's,^ssh-commander-pkg,ssh-commander,' ssh-commander-pkg/
+        # Create the archive
+        tar -czf release/${{ matrix.asset_name }}.tar.gz ssh-commander
+        
+        # Cleanup
+        rm -rf ssh-commander
       shell: bash
 
     - name: Package Release (Windows)

@@ -58,26 +58,41 @@ jobs:
     - name: Package Release (Unix)
       if: matrix.platform != 'windows'
       run: |
-        mkdir -p release/ssh-commander
-        cp dist/${{ matrix.asset_name }} release/ssh-commander/
-        cp servers.yaml.example release/ssh-commander/
-        cp README.md release/ssh-commander/
-        cp install.sh release/ssh-commander/
-        cd release
-        tar czf ${{ matrix.asset_name }}.tar.gz ssh-commander
+        # Create a clean directory for the release
+        rm -rf release
+        mkdir -p release
+        
+        # Create the package directory
+        mkdir -p ssh-commander-pkg
+        cp dist/${{ matrix.asset_name }} ssh-commander-pkg/
+        cp servers.yaml.example ssh-commander-pkg/
+        cp README.md ssh-commander-pkg/
+        cp install.sh ssh-commander-pkg/
+        
+        # Create the archive from outside the directory
+        tar -czf release/${{ matrix.asset_name }}.tar.gz --transform 's,^ssh-commander-pkg,ssh-commander,' ssh-commander-pkg/
       shell: bash
 
     - name: Package Release (Windows)
       if: matrix.platform == 'windows'
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path release/ssh-commander
-        Copy-Item dist/${{ matrix.asset_name }}.exe release/ssh-commander/
-        Copy-Item servers.yaml.example release/ssh-commander/
-        Copy-Item README.md release/ssh-commander/
-        Copy-Item install.ps1 release/ssh-commander/
-        cd release
-        Compress-Archive -Path ssh-commander -DestinationPath ${{ matrix.asset_name }}.zip
+        # Clean up and create directories
+        Remove-Item -Path release -Recurse -Force -ErrorAction SilentlyContinue
+        New-Item -ItemType Directory -Force -Path release
+        
+        # Create package directory
+        New-Item -ItemType Directory -Force -Path ssh-commander
+        Copy-Item dist/${{ matrix.asset_name }}.exe ssh-commander/
+        Copy-Item servers.yaml.example ssh-commander/
+        Copy-Item README.md ssh-commander/
+        Copy-Item install.ps1 ssh-commander/
+        
+        # Create archive
+        Compress-Archive -Path ssh-commander -DestinationPath release/${{ matrix.asset_name }}.zip
+        
+        # Cleanup
+        Remove-Item -Path ssh-commander -Recurse -Force
 
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'

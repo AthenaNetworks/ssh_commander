@@ -12,6 +12,7 @@ warnings.filterwarnings(
 
 import paramiko
 import sys
+import os
 import argparse
 from typing import List, Dict
 import yaml
@@ -168,8 +169,20 @@ class SSHCommander:
                 print(f"   {Fore.BLUE}Port:{Style.RESET_ALL} {server['port']}")
 
     def _save_servers(self):
-        """Save the current server configuration to file."""
-        with open(self.config_file, 'w') as f:
+        """Save the current server configuration to file.
+        
+        Uses the first available config path from _get_config_paths().
+        Creates parent directories if they don't exist.
+        """
+        config_paths = self._get_config_paths()
+        save_path = config_paths[0]  # Use first path (highest priority)
+        
+        # Create parent directories if they don't exist
+        parent_dir = os.path.dirname(save_path)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
+            
+        with open(save_path, 'w') as f:
             yaml.safe_dump(self.servers, f)
 
 def main():

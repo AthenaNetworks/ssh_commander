@@ -17,6 +17,18 @@ case "$ARCH" in
     aarch64|arm64) ARCH="arm64";;
 esac
 
+# Ensure we're in the right directory
+if [ ! -d "ssh-commander" ] && [ -f "ssh-commander-${OS}-${ARCH}.tar.gz" ]; then
+    tar xzf "ssh-commander-${OS}-${ARCH}.tar.gz"
+fi
+
+if [ ! -d "ssh-commander" ]; then
+    echo "Error: ssh-commander directory not found. Please ensure you're in the directory where you extracted the archive."
+    exit 1
+fi
+
+cd ssh-commander
+
 # Find the right executable
 EXECUTABLE="ssh-commander-${OS}-${ARCH}"
 

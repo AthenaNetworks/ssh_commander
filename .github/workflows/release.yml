@@ -58,26 +58,26 @@ jobs:
     - name: Package Release (Unix)
       if: matrix.platform != 'windows'
       run: |
-        mkdir -p release
-        cp dist/${{ matrix.asset_name }} release/
-        cp servers.yaml.example release/
-        cp README.md release/
-        cp install.sh release/
+        mkdir -p release/ssh-commander
+        cp dist/${{ matrix.asset_name }} release/ssh-commander/
+        cp servers.yaml.example release/ssh-commander/
+        cp README.md release/ssh-commander/
+        cp install.sh release/ssh-commander/
         cd release
-        tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md install.sh
+        tar czf ${{ matrix.asset_name }}.tar.gz ssh-commander
       shell: bash
 
     - name: Package Release (Windows)
       if: matrix.platform == 'windows'
       shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path release
-        Copy-Item dist/${{ matrix.asset_name }}.exe release/
-        Copy-Item servers.yaml.example release/
-        Copy-Item README.md release/
-        Copy-Item install.ps1 release/
+        New-Item -ItemType Directory -Force -Path release/ssh-commander
+        Copy-Item dist/${{ matrix.asset_name }}.exe release/ssh-commander/
+        Copy-Item servers.yaml.example release/ssh-commander/
+        Copy-Item README.md release/ssh-commander/
+        Copy-Item install.ps1 release/ssh-commander/
         cd release
-        Compress-Archive -Path ${{ matrix.asset_name }}.exe, servers.yaml.example, README.md, install.ps1 -DestinationPath ${{ matrix.asset_name }}.zip
+        Compress-Archive -Path ssh-commander -DestinationPath ${{ matrix.asset_name }}.zip
 
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'

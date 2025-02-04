@@ -101,9 +101,14 @@ jobs:
     - name: Build Debian Package
       if: matrix.build_deb
       run: |
+        # Install build dependencies
         sudo apt-get update
-        sudo apt-get install -y debhelper dh-python python3-all
+        sudo apt-get install -y build-essential debhelper dh-python python3-all python3-setuptools python3-pip python3-paramiko python3-yaml python3-colorama
+        
+        # Build the package
         dpkg-buildpackage -us -uc -b
+        
+        # Copy the .deb file to release directory
         cp ../ssh-commander_*.deb release/
 
     - name: Generate SHA256 checksums (Unix)

@@ -1,4 +1,4 @@
-ssh-commander (1.0.6) unstable; urgency=medium
+ssh-commander (1.0.9) unstable; urgency=medium
 
   * Initial release
   * Add standard config file locations

@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 
+import warnings
+from cryptography.utils import CryptographyDeprecationWarning
+
+# Filter out cryptography deprecation warnings from paramiko
+warnings.filterwarnings(
+    'ignore',
+    category=CryptographyDeprecationWarning,
+    message='.*TripleDES.*'
+)
+
 import paramiko
 import sys
 import argparse

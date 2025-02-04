@@ -62,8 +62,9 @@ jobs:
         cp dist/${{ matrix.asset_name }} release/
         cp servers.yaml.example release/
         cp README.md release/
+        cp install.sh release/
         cd release
-        tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md
+        tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md install.sh
       shell: bash
 
     - name: Package Release (Windows)
@@ -74,8 +75,9 @@ jobs:
         Copy-Item dist/${{ matrix.asset_name }}.exe release/
         Copy-Item servers.yaml.example release/
         Copy-Item README.md release/
+        Copy-Item install.ps1 release/
         cd release
-        Compress-Archive -Path ${{ matrix.asset_name }}.exe, servers.yaml.example, README.md -DestinationPath ${{ matrix.asset_name }}.zip
+        Compress-Archive -Path ${{ matrix.asset_name }}.exe, servers.yaml.example, README.md, install.ps1 -DestinationPath ${{ matrix.asset_name }}.zip
 
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'
@@ -136,8 +138,14 @@ jobs:
           echo "" >> release_notes.md
           echo "2. Extract the archive" >> release_notes.md
           echo "3. Run the installation script:" >> release_notes.md
+          echo "   For macOS/Linux:" >> release_notes.md
           echo "   \`\`\`bash" >> release_notes.md
-          echo "   ./install.sh" >> release_notes.md
+          echo "   sudo ./install.sh" >> release_notes.md
+          echo "   \`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "   For Windows (Run PowerShell as Administrator):" >> release_notes.md
+          echo "   \`\`\`powershell" >> release_notes.md
+          echo "   .\install.ps1" >> release_notes.md
           echo "   \`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "## SHA256 Checksums" >> release_notes.md

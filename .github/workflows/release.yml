@@ -55,25 +55,30 @@ jobs:
         fi
       shell: bash
         
-    - name: Package Release
+    - name: Package Release (Unix)
+      if: matrix.platform != 'windows'
       run: |
         mkdir -p release
-        if [ "${{ matrix.platform }}" = "windows" ]; then
-          cp dist/${{ matrix.asset_name }}.exe release/
-          cp servers.yaml.example release/
-          cp README.md release/
-          cd release
-          zip ${{ matrix.asset_name }}.zip ${{ matrix.asset_name }}.exe servers.yaml.example README.md
-        else
-          cp dist/${{ matrix.asset_name }} release/
-          cp servers.yaml.example release/
-          cp README.md release/
-          cd release
-          tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md
-        fi
+        cp dist/${{ matrix.asset_name }} release/
+        cp servers.yaml.example release/
+        cp README.md release/
+        cd release
+        tar czf ${{ matrix.asset_name }}.tar.gz ${{ matrix.asset_name }} servers.yaml.example README.md
       shell: bash
 
-    - name: Generate SHA256 checksums
+    - name: Package Release (Windows)
+      if: matrix.platform == 'windows'
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path release
+        Copy-Item dist/${{ matrix.asset_name }}.exe release/
+        Copy-Item servers.yaml.example release/
+        Copy-Item README.md release/
+        cd release
+        Compress-Archive -Path ${{ matrix.asset_name }}.exe, servers.yaml.example, README.md -DestinationPath ${{ matrix.asset_name }}.zip
+
+    - name: Generate SHA256 checksums (Unix)
+      if: matrix.platform != 'windows'
       run: |
         cd release
         if [ "$(uname)" = "Darwin" ]; then
@@ -81,13 +86,16 @@ jobs:
         else
           CHECKSUM_CMD="sha256sum"
         fi
-        
-        if [ "${{ matrix.platform }}" = "windows" ]; then
-          $CHECKSUM_CMD ${{ matrix.asset_name }}.zip > ${{ matrix.asset_name }}.zip.sha256
-        else
-          $CHECKSUM_CMD ${{ matrix.asset_name }}.tar.gz > ${{ matrix.asset_name }}.tar.gz.sha256
-        fi
+        $CHECKSUM_CMD ${{ matrix.asset_name }}.tar.gz > ${{ matrix.asset_name }}.tar.gz.sha256
       shell: bash
+
+    - name: Generate SHA256 checksums (Windows)
+      if: matrix.platform == 'windows'
+      shell: pwsh
+      run: |
+        cd release
+        $hash = Get-FileHash -Algorithm SHA256 ${{ matrix.asset_name }}.zip
+        "$($hash.Hash)  ${{ matrix.asset_name }}.zip" | Out-File -Encoding UTF8 ${{ matrix.asset_name }}.zip.sha256
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

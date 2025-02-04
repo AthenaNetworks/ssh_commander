@@ -3,16 +3,22 @@
 %:
 	dh $@
 
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build dist *.spec
+
+# Install pyinstaller in the build environment
 override_dh_auto_build:
-	pyinstaller --onefile --name ssh-commander-linux-x64 ssh_commander.py
+	pip3 install --user pyinstaller
+	~/.local/bin/pyinstaller --onefile --name ssh-commander-linux-x64 ssh_commander.py
 
 override_dh_auto_install:
 	dh_install
 
+# Skip stripping binary (PyInstaller binary)
 override_dh_strip:
-	# Skip stripping binary (PyInstaller binary)
 	true
 
+# Skip shared library dependency calculation (PyInstaller handles this)
 override_dh_shlibdeps:
-	# Skip shared library dependency calculation (PyInstaller handles this)
 	true

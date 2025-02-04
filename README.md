@@ -184,7 +184,15 @@ SSH Commander uses colors to make output more readable:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0) - see the [LICENSE](LICENSE) file for details.
+
+Key points of the GPL-3.0 license:
+- ✅ You can use this software for commercial purposes
+- ✅ You can modify the source code
+- ✅ You can distribute your modifications
+- ⚠️ You must disclose the source code of your modifications
+- ⚠️ You must license your modifications under the GPL-3.0
+- ⚠️ You must state the significant changes you made
 
 ## Support
 

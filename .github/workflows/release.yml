@@ -12,12 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
@@ -144,8 +144,11 @@ jobs:
         # Build the package
         dpkg-buildpackage -us -uc -b
         
-        # Copy the .deb file to release directory
+        # Copy the .deb file to release directory and generate checksum
         cp ../ssh-commander_*.deb release/
+        cd release
+        sha256sum ssh-commander_*.deb > ssh-commander_${VERSION}_amd64.deb.sha256
+        cd ..
 
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'
@@ -180,7 +183,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       contents: write
     steps:

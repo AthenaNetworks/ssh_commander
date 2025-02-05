@@ -38,17 +38,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
-    - name: Update version in Python file
-      run: |
-        VERSION=${GITHUB_REF_NAME#v}
-        sed -i "s/__version__ = .*/__version__ = '$VERSION'/" ssh_commander.py
-        git config --local user.email "actions@github.com"
-        git config --local user.name "GitHub Actions"
-        git add ssh_commander.py
-        git commit -m "Update version to $VERSION" || true
-        git push
-    
+       
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

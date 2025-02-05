@@ -29,20 +29,35 @@ BASE_NAME="ssh-commander"
 
 # Build for current platform
 echo "Building for $OS-$ARCH..."
+# Common PyInstaller options
+PYINSTALLER_OPTS="--onefile --noupx \
+    --exclude-module _bootlocale \
+    --exclude-module PIL \
+    --exclude-module numpy \
+    --exclude-module pandas \
+    --exclude-module matplotlib \
+    --exclude-module tkinter \
+    --exclude-module unittest \
+    --exclude-module email \
+    --exclude-module http \
+    --exclude-module html \
+    --exclude-module xml \
+    --exclude-module pydoc"
+
 if [ "$OS" = "windows" ]; then
     # Windows build
-    pyinstaller --onefile \
+    pyinstaller $PYINSTALLER_OPTS \
         --name "${BASE_NAME}-windows-${ARCH}" \
         --add-binary "venv/Lib/site-packages/bcrypt/_bcrypt.pyd;bcrypt" \
         ssh_commander.py
 elif [ "$OS" = "linux" ]; then
     # Linux build
-    pyinstaller --onefile \
+    pyinstaller $PYINSTALLER_OPTS \
         --name "${BASE_NAME}-linux-${ARCH}" \
         ssh_commander.py
 else
     # macOS build
-    pyinstaller --onefile \
+    pyinstaller $PYINSTALLER_OPTS \
         --name "${BASE_NAME}-macos-${ARCH}" \
         ssh_commander.py
 fi

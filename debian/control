@@ -1,7 +1,7 @@
 Source: ssh-commander
 Section: utils
 Priority: optional
-Maintainer: Your Name <your.email@example.com>
+Maintainer: Josh Finlay <josh@athenanetworks.com.au>
 Build-Depends: debhelper (>= 10), python3, python3-all, python3-setuptools, python3-paramiko, python3-yaml, python3-colorama, python3-pip
 
 Package: ssh-commander

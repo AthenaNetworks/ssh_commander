@@ -1,0 +1,3 @@
+uptime
+whoami
+host -t a athenanetworks.com.au

@@ -204,7 +204,9 @@ class SSHCommander:
         
         except KeyboardInterrupt:
             print(f"\n{Fore.YELLOW}Interrupted. Closing connection to {server['hostname']}{Style.RESET_ALL}")
-            return "", ""
+            self.cleanup_sessions()
+            channel.close()
+            os._exit(0)
             
         finally:
             channel.close()
@@ -283,11 +285,16 @@ class SSHCommander:
                     print(error)
                     continue
                 
+                cancontinue = True
+
                 try:
                     current_session = {'client': client, 'channels': []}
                     self._active_sessions.append(current_session)
                     
                     for command in commands:
+                        if not cancontinue:
+                            break
+
                         print(f"{Fore.YELLOW}>>> {command}{Style.RESET_ALL}", flush=True)
                         
                         # Start command execution
@@ -307,8 +314,9 @@ class SSHCommander:
                             try:
                                 time.sleep(0.1)
                             except KeyboardInterrupt:
-                                print(f"\n{Fore.YELLOW}Interrupted. Sending Ctrl+C...{Style.RESET_ALL}")
+                                print(f"\n{Fore.YELLOW}Interrupted. Received Ctrl+C...{Style.RESET_ALL}")
                                 channel.send('\x03')
+                                cancontinue = False
                                 break
                         
                         # Wait for output thread to finish
@@ -322,7 +330,8 @@ class SSHCommander:
                         channel.close()
                 except KeyboardInterrupt:
                     print(f"\n{Fore.YELLOW}Interrupted. Closing connection to {server['hostname']}{Style.RESET_ALL}")
-                    raise
+                    cancontinue = False
+                    break
                             
                 except Exception as e:
                     print(f"{Fore.RED}Error connecting to {server['hostname']}: {str(e)}{Style.RESET_ALL}")
@@ -335,10 +344,11 @@ class SSHCommander:
                             self._active_sessions.remove(current_session)
                     
         except KeyboardInterrupt:
-            print(f"\n{Fore.YELLOW}Command execution interrupted. Cleaning up...{Style.RESET_ALL}")
+            print(f"\n{Fore.YELLOW}Cleaning up...{Style.RESET_ALL}")
         finally:
             try:
                 self.cleanup_sessions()
+                os._exit(0)
             except Exception as e:
                 print(f"{Fore.RED}Error during final cleanup: {e}{Style.RESET_ALL}")
 

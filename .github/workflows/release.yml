@@ -50,9 +50,35 @@ jobs:
     - name: Build with PyInstaller
       run: |
         if [ "${{ matrix.platform }}" = "windows" ]; then
-          pyinstaller --onefile --name ${{ matrix.asset_name }} ssh_commander.py
+          pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} \
+            --exclude-module _bootlocale \
+            --exclude-module PIL \
+            --exclude-module numpy \
+            --exclude-module pandas \
+            --exclude-module matplotlib \
+            --exclude-module tkinter \
+            --exclude-module unittest \
+            --exclude-module email \
+            --exclude-module http \
+            --exclude-module html \
+            --exclude-module xml \
+            --exclude-module pydoc \
+            ssh_commander.py
         else
-          pyinstaller --onefile --name ${{ matrix.asset_name }} ssh_commander.py
+          pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} \
+            --exclude-module _bootlocale \
+            --exclude-module PIL \
+            --exclude-module numpy \
+            --exclude-module pandas \
+            --exclude-module matplotlib \
+            --exclude-module tkinter \
+            --exclude-module unittest \
+            --exclude-module email \
+            --exclude-module http \
+            --exclude-module html \
+            --exclude-module xml \
+            --exclude-module pydoc \
+            ssh_commander.py
         fi
       shell: bash
         
@@ -142,6 +168,7 @@ jobs:
           release/*.tar.gz
           release/*.zip
           release/*.sha256
+          release/*.deb
         if-no-files-found: error
 
   create-release:
@@ -195,6 +222,7 @@ jobs:
             artifacts/*.tar.gz
             artifacts/*.zip
             artifacts/*.sha256
+            artifacts/*.deb
           body_path: release_notes.md
           draft: false
           prerelease: false

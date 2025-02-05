@@ -4,12 +4,12 @@ set -e
 case "$1" in
     configure)
         # Create config directory if it doesn't exist
-        mkdir -p /etc/ssh-commander
+        mkdir -p ~/.config/ssh-commander
 
-        # Copy example config if it doesn't exist
-        if [ ! -f /etc/ssh-commander/servers.yaml ]; then
-            cp /usr/share/ssh-commander/servers.yaml.example /etc/ssh-commander/servers.yaml.example
-        fi
+        # Show usage instructions
+        echo "\nSSH Commander has been installed!\n"
+        echo "To add a new server, use: ssh-commander add"
+        echo "To remove a server, edit: ~/.config/ssh-commander/servers.yaml\n"
     ;;
 esac
 

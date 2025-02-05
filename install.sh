@@ -39,22 +39,14 @@ fi
 
 # Create installation directories
 sudo mkdir -p /usr/local/bin
-sudo mkdir -p /etc/ssh-commander
+mkdir -p ~/.config/ssh-commander
 
 # Install executable
 sudo cp "$EXECUTABLE" /usr/local/bin/ssh-commander
 sudo chmod +x /usr/local/bin/ssh-commander
 
-# Copy example config if no config exists
-if [ ! -f /etc/ssh-commander/servers.yaml ]; then
-    sudo cp servers.yaml.example /etc/ssh-commander/servers.yaml
-    sudo chmod 600 /etc/ssh-commander/servers.yaml
-    echo "Created example config at /etc/ssh-commander/servers.yaml"
-fi
-
-echo "Installation complete!"
-echo "1. Edit your server configuration:"
-echo "   sudo nano /etc/ssh-commander/servers.yaml"
-echo ""
-echo "2. Test the installation:"
-echo "   ssh-commander --config /etc/ssh-commander/servers.yaml list"
+echo "\nSSH Commander has been installed!\n"
+echo "To add a new server, use: ssh-commander add"
+echo "To remove a server, use: ssh-commander remove [SERVER]\n"
+echo "To view a list of configured servers, use: ssh-commander list\n"
+echo "For more information, use: ssh-commander --help\n"

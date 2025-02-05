@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = '1.0.24'
+__version__ = '1.0.26'
 
 import warnings
 import os

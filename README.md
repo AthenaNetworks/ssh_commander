@@ -78,10 +78,22 @@ The configuration file uses YAML format and supports both key-based and password
 
 ### Security Notes
 
-- Prefer key-based authentication over password authentication
-- SSH keys paths use `~` expansion to your home directory
-- The config directory `~/.config/ssh-commander` is created automatically
-- Permissions on the config file are set to user-only read/write
+⚠️ **Important Security Warning**:
+- **NEVER store SSH passwords in the config file**
+  - Passwords are stored in plaintext and are NOT secure
+  - Anyone with access to your config file can see the passwords
+  - This includes backup systems, cloud sync, etc.
+
+✅ **Recommended Approach**:
+- Use key-based authentication instead
+  - Generate an SSH key: `ssh-keygen -t ed25519`
+  - Copy to server: `ssh-copy-id user@hostname`
+  - Use `key_file: ~/.ssh/id_ed25519` in config
+
+### Configuration Security
+- Config file is stored in `~/.config/ssh-commander/servers.yaml`
+- File permissions are set to user-only read/write (600)
+- SSH key paths support `~` expansion to your home directory
 
 ## Usage
 

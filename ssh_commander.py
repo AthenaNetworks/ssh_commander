@@ -354,6 +354,12 @@ class SSHCommander:
 
     def add_server(self):
         """Add a new server to the configuration."""
+        # If no config file exists, initialize an empty one
+        if not self.servers:
+            self.config_file = self._get_writable_config_path()
+            print(f"\n{Fore.YELLOW}No config file found. Creating new one at: {self.config_file}{Style.RESET_ALL}")
+            self.servers = []
+            
         print("\nAdding a new server to the configuration")
         server = {}
         server['hostname'] = input("Enter hostname: ").strip()

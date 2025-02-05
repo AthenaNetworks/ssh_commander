@@ -11,19 +11,30 @@ SSH Commander is a powerful, colorful command-line tool for executing commands a
 - 🔒 Secure password handling (never shown in terminal)
 - 🚀 Single binary deployment
 - ⚙️ YAML-based configuration
+- 📊 Real-time output streaming
+- ⌨️ Graceful interrupt handling (Ctrl+C support)
 
 ## Installation
 
-### Option 1: Using Pre-built Binaries
+### Option 1: Debian Package (Ubuntu/Debian)
+
+1. Download the latest .deb package from the [releases page](https://github.com/AthenaNetworks/ssh_commander/releases)
+2. Install using dpkg:
+```bash
+sudo dpkg -i ssh-commander_*.deb
+```
+
+### Option 2: Using Pre-built Binaries
 
 1. Download the latest release for your platform from the [releases page](https://github.com/AthenaNetworks/ssh_commander/releases)
 2. Extract the archive
 3. Run the installation script:
 ```bash
-./install.sh
+./install.sh  # For macOS/Linux
+.\install.ps1  # For Windows (Run as Administrator)
 ```
 
-### Option 2: Building from Source
+### Option 3: Building from Source
 
 1. Clone the repository:
 ```bash

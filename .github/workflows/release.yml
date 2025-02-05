@@ -134,6 +134,18 @@ jobs:
         # Fix pip permissions
         sudo chown -R $USER:$USER ~/.cache/pip
         
+        # Extract version from git tag
+        VERSION=${GITHUB_REF_NAME#v}
+        
+        # Update debian/changelog
+        NOW=$(date -R)
+        echo "ssh-commander ($VERSION) unstable; urgency=medium
+
+  * Release version $VERSION
+
+ -- GitHub Actions <actions@github.com>  $NOW
+" > debian/changelog
+        
         # Build the package
         dpkg-buildpackage -us -uc -b
         

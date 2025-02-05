@@ -40,73 +40,29 @@ def get_paramiko():
     return _paramiko
 
 class SSHCommander:
-    def __init__(self, config_file: str = "servers.yaml"):
-        self.config_file = config_file
+    def __init__(self, config_file: str = None):
+        self.config_file = config_file or os.path.expanduser("~/.config/ssh-commander/servers.yaml")
         self.servers = self._load_servers()
         self._active_sessions = []  # Keep track of active SSH sessions
-
-    def _get_config_paths(self) -> List[str]:
-        """Get list of possible config file paths in order of preference."""
-        return [
-            self.config_file,  # User-specified path or default
-            "/etc/ssh-commander/servers.yaml",  # System-wide config
-            os.path.expanduser("~/.config/ssh-commander/servers.yaml"),  # User config
-            "servers.yaml"  # Local directory
-        ]
         
-    def _get_writable_config_path(self) -> str:
-        """Get the first writable config path from the list of possible paths.
-        
-        Returns:
-            str: The path to use for saving the config file.
-        """
-        config_paths = self._get_config_paths()
-        
-        for path in config_paths:
-            parent_dir = os.path.dirname(path)
-            if not parent_dir:  # Current directory
-                return path
-                
-            # Check if parent directory exists and is writable
-            if os.path.exists(parent_dir):
-                if os.access(parent_dir, os.W_OK):
-                    return path
-            else:
-                # If parent directory doesn't exist, check if we can create it
-                try:
-                    # Try to create parent directory
-                    os.makedirs(parent_dir, exist_ok=True)
-                    return path
-                except PermissionError:
-                    continue
-        
-        # If no system paths are writable, fall back to user config directory
-        user_config_dir = os.path.expanduser("~/.config/ssh-commander")
-        os.makedirs(user_config_dir, exist_ok=True)
-        return os.path.join(user_config_dir, "servers.yaml")
+    def _ensure_config_dir(self) -> None:
+        """Ensure the config directory exists."""
+        config_dir = os.path.dirname(self.config_file)
+        os.makedirs(config_dir, exist_ok=True)
 
     def _load_servers(self) -> List[Dict]:
         """Load server configurations from YAML file."""
-        # Try all config paths in order
-        for config_path in self._get_config_paths():
-            if os.path.exists(config_path):
-                if config_path != self.config_file:
-                    print(f"Using config file: {config_path}")
-                self.config_file = config_path  # Remember which config we loaded
-                with open(config_path, 'r') as f:
-                    data = yaml.safe_load(f)
-                    return [] if data is None else data
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as f:
+                data = yaml.safe_load(f)
+                return [] if data is None else data
 
         # If we're adding a server, just return empty list
         if len(sys.argv) > 1 and sys.argv[1] == 'add':
             return []
             
         # Otherwise show error and exit
-        print("Error: No config file found in standard locations:")
-        print(f"  - {self.config_file} (specified path)")
-        print("  - /etc/ssh-commander/servers.yaml")
-        print("  - ~/.config/ssh-commander/servers.yaml")
-        print("  - ./servers.yaml")
+        print(f"Error: No config file found at {self.config_file}")
         sys.exit(1)
 
     def _connect_to_server(self, server: Dict) -> tuple:
@@ -414,32 +370,10 @@ class SSHCommander:
                 print(f"   {Fore.LIGHTBLUE_EX}Port:{Style.RESET_ALL} {server['port']}")
 
     def _save_servers(self):
-        """Save the current server configuration to file.
-        
-        Always saves to the same file that was loaded, falling back to user config
-        directory if that path is not writable.
-        """
-        try:
-            # First try to save to the same file we loaded from
-            parent_dir = os.path.dirname(self.config_file)
-            if parent_dir:
-                os.makedirs(parent_dir, exist_ok=True)
-            
-            with open(self.config_file, 'w') as f:
-                yaml.safe_dump(self.servers, f)
-            return
-        except (PermissionError, OSError):
-            # If we can't save to the original location, fall back to user config
-            user_config_dir = os.path.expanduser("~/.config/ssh-commander")
-            os.makedirs(user_config_dir, exist_ok=True)
-            save_path = os.path.join(user_config_dir, "servers.yaml")
-            
-            print(f"\n{Fore.YELLOW}Warning: Could not save to {self.config_file}")
-            print(f"Saving to {save_path} instead{Style.RESET_ALL}")
-            
-            with open(save_path, 'w') as f:
-                yaml.safe_dump(self.servers, f)
-            self.config_file = save_path  # Update config file path
+        """Save the current server configuration to file."""
+        self._ensure_config_dir()
+        with open(self.config_file, 'w') as f:
+            yaml.safe_dump(self.servers, f)
 
 def print_examples():
     """Print usage examples with color formatting"""
@@ -454,8 +388,6 @@ def print_examples():
     print(f"  ssh-commander list")
     print(f"\n  {Fore.LIGHTCYAN_EX}# Remove a server{Style.RESET_ALL}")
     print(f"  ssh-commander remove server1.example.com")
-    print(f"\n  {Fore.LIGHTCYAN_EX}# Use a different config file{Style.RESET_ALL}")
-    print(f"  ssh-commander --config /path/to/config.yaml list")
 
 def main():
     # Create main parser with detailed description
@@ -465,12 +397,6 @@ def main():
     )
     
     # Global options
-    parser.add_argument(
-        '--config',
-        default='servers.yaml',
-        help='Server configuration file path. Can be in current directory, /etc/ssh-commander/, or ~/.config/ssh-commander/'
-    )
-    
     parser.add_argument(
         '--version',
         action='version',
@@ -539,7 +465,7 @@ def main():
         sys.exit(1)
     
     try:
-        commander = SSHCommander(args.config)
+        commander = SSHCommander()
         
         if args.command == 'exec':
             if args.exec_command:  # Check if -c was used

@@ -136,16 +136,16 @@ jobs:
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
-        
-        # Update debian/changelog
         NOW=$(date -R)
-        cat > debian/changelog << EOL
-ssh-commander ($VERSION) unstable; urgency=medium
-
-  * Release version $VERSION
-
- -- GitHub Actions <actions@github.com>  $NOW
-EOL
+        
+        # Create changelog
+        cat > debian/changelog << 'EOF'
+        ssh-commander ($VERSION) unstable; urgency=medium
+        
+          * Release version $VERSION
+        
+         -- GitHub Actions <actions@github.com>  $NOW
+        EOF
         
         # Build the package
         dpkg-buildpackage -us -uc -b

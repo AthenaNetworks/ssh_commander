@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # Create config directory if it doesn't exist
+        mkdir -p /etc/ssh-commander
+
+        # Copy example config if it doesn't exist
+        if [ ! -f /etc/ssh-commander/servers.yaml ]; then
+            cp /usr/share/ssh-commander/servers.yaml.example /etc/ssh-commander/servers.yaml.example
+        fi
+    ;;
+esac
+
+#DEBHELPER#
+
+exit 0

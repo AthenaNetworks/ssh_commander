@@ -1,2 +1,2 @@
 dist/ssh-commander usr/bin/
-servers.yaml.example etc/ssh-commander/
+servers.yaml.example usr/share/ssh-commander/

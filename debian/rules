@@ -10,7 +10,20 @@ override_dh_auto_clean:
 # Install pyinstaller in the build environment
 override_dh_auto_build:
 	sudo pip3 install pyinstaller
-	pyinstaller --onefile --name ssh-commander-linux-x64 ssh_commander.py
+	pyinstaller --onefile --noupx --name ssh-commander \
+		--exclude-module _bootlocale \
+		--exclude-module PIL \
+		--exclude-module numpy \
+		--exclude-module pandas \
+		--exclude-module matplotlib \
+		--exclude-module tkinter \
+		--exclude-module unittest \
+		--exclude-module email \
+		--exclude-module http \
+		--exclude-module html \
+		--exclude-module xml \
+		--exclude-module pydoc \
+		ssh_commander.py
 
 override_dh_auto_install:
 	dh_install

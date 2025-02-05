@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+__version__ = '1.0.24'
+
 import warnings
 import os
 import sys
@@ -95,6 +97,11 @@ class SSHCommander:
                     data = yaml.safe_load(f)
                     return [] if data is None else data
 
+        # If we're adding a server, just return empty list
+        if len(sys.argv) > 1 and sys.argv[1] == 'add':
+            return []
+            
+        # Otherwise show error and exit
         print("Error: No config file found in standard locations:")
         print(f"  - {self.config_file} (specified path)")
         print("  - /etc/ssh-commander/servers.yaml")
@@ -462,6 +469,12 @@ def main():
         '--config',
         default='servers.yaml',
         help='Server configuration file path. Can be in current directory, /etc/ssh-commander/, or ~/.config/ssh-commander/'
+    )
+    
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'ssh-commander {__version__}'
     )
     
     # Create subcommand parsers

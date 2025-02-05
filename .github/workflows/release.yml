@@ -139,13 +139,13 @@ jobs:
         NOW=$(date -R)
         
         # Create changelog
-        cat > debian/changelog << 'EOF'
-        ssh-commander ($VERSION) unstable; urgency=medium
-        
-          * Release version $VERSION
-        
-         -- GitHub Actions <actions@github.com>  $NOW
-        EOF
+        cat > debian/changelog << EOF
+ssh-commander ($VERSION) unstable; urgency=medium
+
+  * Release version $VERSION
+
+ -- GitHub Actions <actions@github.com>  $NOW
+EOF
         
         # Build the package
         dpkg-buildpackage -us -uc -b

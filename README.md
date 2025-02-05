@@ -56,32 +56,32 @@ pip install -r requirements.txt
 
 ## Configuration
 
-SSH Commander uses a YAML configuration file to store server details. By default, it looks for `servers.yaml` in the current directory, but you can specify a different file using the `--config` option.
+SSH Commander stores server configurations in `~/.config/ssh-commander/servers.yaml`. This file is automatically created when you add your first server.
 
-### Example Configuration
+### Configuration Format
+
+The configuration file uses YAML format and supports both key-based and password authentication:
 
 ```yaml
-# Key-based authentication
+# Key-based authentication (recommended)
 - hostname: web1.example.com
   username: admin
-  key_file: ~/.ssh/id_rsa
+  key_file: ~/.ssh/id_rsa  # Path to your SSH key
   port: 22  # Optional, defaults to 22
 
 # Password authentication
 - hostname: db1.example.com
   username: dbadmin
-  password: your_secure_password
+  password: your_secure_password  # Not recommended for production use
   port: 2222
-
-# Multiple servers with similar configurations
-- hostname: app1.example.com
-  username: deployer
-  key_file: ~/.ssh/deploy_key
-
-- hostname: app2.example.com
-  username: deployer
-  key_file: ~/.ssh/deploy_key
 ```
+
+### Security Notes
+
+- Prefer key-based authentication over password authentication
+- SSH keys paths use `~` expansion to your home directory
+- The config directory `~/.config/ssh-commander` is created automatically
+- Permissions on the config file are set to user-only read/write
 
 ## Usage
 

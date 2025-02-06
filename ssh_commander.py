@@ -53,17 +53,18 @@ class SSHCommander:
     def _load_servers(self) -> List[Dict]:
         """Load server configurations from YAML file."""
         if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as f:
-                data = yaml.safe_load(f)
-                return [] if data is None else data
+            try:
+                with open(self.config_file, 'r') as f:
+                    data = yaml.safe_load(f)
+                    return [] if data is None else data
+            except IOError:
+                raise
+            except yaml.YAMLError:
+                raise
 
         # If we're adding a server, just return empty list
         if len(sys.argv) > 1 and sys.argv[1] == 'add':
             return []
-            
-        # Otherwise show error and exit
-        print(f"Error: No config file found at {self.config_file}")
-        sys.exit(1)
 
     def _connect_to_server(self, server: Dict) -> tuple:
         """Connect to a server and return the client."""
@@ -74,7 +75,7 @@ class SSHCommander:
         try:
             # Connect using either password or key-based authentication
             if 'key_file' in server:
-                key_file = os.path.expanduser(server['key_file'])  # Expand ~ to home directory
+                key_file = server['key_file']
                 if not os.path.exists(key_file):
                     raise FileNotFoundError(f"SSH key file not found: {key_file}")
                     
@@ -464,7 +465,11 @@ def main():
         sys.exit(1)
     
     try:
-        commander = SSHCommander()
+        config_file = os.path.join(os.path.dirname(__file__), 'servers.yaml')
+        if os.path.isfile(config_file):
+            commander = SSHCommander(config_file=config_file)
+        else:
+            commander = SSHCommander()
         
         if args.command == 'exec':
             if args.exec_command:  # Check if -c was used

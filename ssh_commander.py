@@ -402,6 +402,11 @@ def main():
         action='version',
         version=f'ssh-commander {__version__}'
     )
+    parser.add_argument(
+        '--config',
+        help='Path to config file (default: ~/.config/ssh-commander/servers.yaml)',
+        metavar='FILE'
+    )
     
     # Create subcommand parsers
     subparsers = parser.add_subparsers(
@@ -465,11 +470,20 @@ def main():
         sys.exit(1)
     
     try:
-        config_file = os.path.join(os.path.dirname(__file__), 'servers.yaml')
-        if os.path.isfile(config_file):
-            commander = SSHCommander(config_file=config_file)
+        # Priority 1: --config argument if provided
+        if args.config:
+            if not os.path.isfile(args.config):
+                print(f"{Fore.RED}Error: Config file '{args.config}' not found{Style.RESET_ALL}")
+                sys.exit(1)
+            commander = SSHCommander(config_file=args.config)
         else:
-            commander = SSHCommander()
+            # Priority 2: servers.yaml in executable directory
+            config_file = os.path.join(os.path.dirname(__file__), 'servers.yaml')
+            if os.path.isfile(config_file):
+                commander = SSHCommander(config_file=config_file)
+            else:
+                # Priority 3: Default location in user's home directory
+                commander = SSHCommander()
         
         if args.command == 'exec':
             if args.exec_command:  # Check if -c was used

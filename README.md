@@ -14,6 +14,23 @@ SSH Commander is a powerful, colorful command-line tool for executing commands a
 - 📊 Real-time output streaming
 - ⌨️ Graceful interrupt handling (Ctrl+C support)
 
+## System Requirements
+
+### Linux
+Ubuntu/Debian:
+- Modern systems: `libffi8` and `libssl3`
+- Older systems: `libffi7` and `libssl1.1`
+
+CentOS/RHEL:
+- Modern systems: `libffi-8` and `openssl-3`
+- Older systems: `libffi-7` and `openssl-1.1`
+
+### Windows
+- Microsoft Visual C++ Redistributable
+
+### macOS
+- No additional requirements
+
 ## Installation
 
 ### Option 1: Debian Package (Ubuntu/Debian)

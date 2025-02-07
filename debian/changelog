@@ -1,3 +1,26 @@
+ssh-commander (1.0.30) unstable; urgency=medium
+
+  * Added config sync feature with support for multiple protocols:
+    - HTTP/HTTPS with request handling
+    - S3 buckets with boto3 integration
+    - Git repositories with branch selection
+    - SFTP with key-based authentication
+    - Local file paths
+  * Added authentication options:
+    - Username for SFTP connections
+    - SSH key file for SFTP and Git
+    - Git branch selection
+  * Added safety features:
+    - Automatic config backups with timestamps
+    - Dry run mode to preview changes
+    - Config verification
+    - Backup restoration on error
+  * Improved config file location handling with proper priority order
+  * Updated post-install message with more features and colorized output
+  * Added RPM package support for CentOS/RHEL systems
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 11:07:03 +1000
+
 ssh-commander (1.0.29) unstable; urgency=medium
 
   * Improved dependency checking in install scripts

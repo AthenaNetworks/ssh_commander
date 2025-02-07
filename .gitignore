@@ -29,6 +29,7 @@ env/
 dist/
 build/
 *.spec
+!rpm/*.spec
 
 # IDE
 .idea/

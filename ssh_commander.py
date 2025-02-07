@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = '1.0.29'
+__version__ = '1.0.30'
 __author__ = 'Josh Finlay'
 __email__ = 'josh@athenanetworks.com.au'
 __description__ = 'SSH Commander'
@@ -45,15 +45,161 @@ def get_paramiko():
 
 class SSHCommander:
     def __init__(self, config_file: str = None):
-        self.config_file = config_file or os.path.expanduser("~/.config/ssh-commander/servers.yaml")
-        print("Config file is set to:", self.config_file)
+        self.config_file = self._find_config_file(config_file)
         self.servers = self._load_servers()
         self._active_sessions = []  # Keep track of active SSH sessions
+    
+    def _find_config_file(self, config_file: str = None) -> str:
+        """Find the appropriate config file location following priority order."""
+        # Priority 1: --config argument
+        if config_file:
+            return config_file
         
-    def _ensure_config_dir(self) -> None:
-        """Ensure the config directory exists."""
-        config_dir = os.path.dirname(self.config_file)
-        os.makedirs(config_dir, exist_ok=True)
+        # Priority 2: servers.yaml in application directory
+        app_config = os.path.join(os.path.dirname(sys.executable), 'servers.yaml')
+        if os.path.isfile(app_config):
+            return app_config
+        
+        # Priority 3: Default location in user's home directory
+        return os.path.expanduser("~/.config/ssh-commander/servers.yaml")
+    
+    def _verify_config(self, config: Union[dict, list]) -> None:
+        """Verify the config format and required fields."""
+        if not isinstance(config, list):
+            raise ValueError("Config must be a list of server entries")
+        for server in config:
+            if not isinstance(server, dict):
+                raise ValueError("Each server entry must be a dictionary")
+            if 'hostname' not in server:
+                raise ValueError("Each server entry must have a hostname")
+    
+    def _download_from_s3(self, bucket: str, key: str) -> dict:
+        """Download config from S3 bucket."""
+        boto3 = get_boto3()
+        s3 = boto3.client('s3')
+        response = s3.get_object(Bucket=bucket, Key=key)
+        return yaml.safe_load(response['Body'].read().decode())
+    
+    def _download_from_git(self, url: str, branch: str = None) -> dict:
+        """Download config from Git repository."""
+        git = get_git()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Clone repository
+            repo = git.Repo.clone_from(url, temp_dir, branch=branch, depth=1)
+            
+            # Look for config file
+            config_paths = [
+                'servers.yaml',
+                'config/servers.yaml',
+                '.ssh-commander/servers.yaml'
+            ]
+            
+            for path in config_paths:
+                full_path = os.path.join(temp_dir, path)
+                if os.path.exists(full_path):
+                    with open(full_path, 'r') as f:
+                        return yaml.safe_load(f)
+            
+            raise FileNotFoundError(f"Could not find servers.yaml in repository. Tried: {', '.join(config_paths)}")
+    
+    def _download_from_sftp(self, hostname: str, path: str, username: str = None, key_file: str = None) -> dict:
+        """Download config from SFTP server."""
+        paramiko = get_paramiko()
+        transport = paramiko.Transport((hostname, 22))
+        
+        if key_file:
+            key = paramiko.RSAKey.from_private_key_file(os.path.expanduser(key_file))
+            transport.connect(username=username, pkey=key)
+        else:
+            transport.connect(username=username)
+        
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        with tempfile.NamedTemporaryFile() as temp_file:
+            sftp.get(path, temp_file.name)
+            return yaml.safe_load(temp_file.read().decode())
+    
+    def sync_config(self, url: str, dry_run: bool = False, verify: bool = False,
+                    username: str = None, key_file: str = None, branch: str = None) -> None:
+        """Sync config from a URL to the appropriate location.
+        
+        Args:
+            url: URL to download config from (supports http(s), s3://, git://, sftp://, file://)
+            dry_run: If True, only show what would happen
+            verify: If True, verify the YAML and server entries after download
+            username: Username for SFTP authentication
+            key_file: SSH key file for SFTP/Git authentication
+            branch: Git branch to use (for git:// URLs)
+        """
+        # Parse URL and validate scheme
+        parsed = urllib.parse.urlparse(url)
+        if not parsed.scheme:
+            url = 'file://' + os.path.abspath(url)
+            parsed = urllib.parse.urlparse(url)
+        
+        # Create backup of existing config if it exists
+        backup_path = None
+        if os.path.exists(self.config_file):
+            backup_path = f"{self.config_file}.{datetime.now().strftime('%Y%m%d_%H%M%S')}.bak"
+            if not dry_run:
+                shutil.copy2(self.config_file, backup_path)
+            print(f"{Fore.BLUE}Created backup: {Style.RESET_ALL}{backup_path}")
+        
+        # Download and process the new config
+        if dry_run:
+            print(f"{Fore.YELLOW}Would download from: {Style.RESET_ALL}{url}")
+            print(f"{Fore.YELLOW}Would save to: {Style.RESET_ALL}{self.config_file}")
+            return
+        
+        try:
+            # Download config based on URL scheme
+            if parsed.scheme == 'file':
+                src_path = urllib.request.url2pathname(parsed.path)
+                if not os.path.exists(src_path):
+                    raise FileNotFoundError(f"Local file not found: {src_path}")
+                with open(src_path, 'r') as f:
+                    new_config = yaml.safe_load(f)
+            
+            elif parsed.scheme in ['http', 'https']:
+                response = requests.get(url)
+                response.raise_for_status()
+                new_config = yaml.safe_load(response.text)
+            
+            elif parsed.scheme == 's3':
+                new_config = self._download_from_s3(parsed.netloc, parsed.path.lstrip('/'))
+            
+            elif parsed.scheme == 'git':
+                new_config = self._download_from_git(url, branch)
+            
+            elif parsed.scheme == 'sftp':
+                new_config = self._download_from_sftp(
+                    hostname=parsed.hostname,
+                    path=parsed.path,
+                    username=username or parsed.username,
+                    key_file=key_file
+                )
+            
+            else:
+                raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+            
+            # Verify the config if requested
+            if verify:
+                self._verify_config(new_config)
+            
+            # Ensure config directory exists
+            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+            
+            # Write the new config
+            with open(self.config_file, 'w') as f:
+                yaml.dump(new_config, f)
+            
+            print(f"{Fore.GREEN}Successfully synced config to: {Style.RESET_ALL}{self.config_file}")
+            
+        except Exception as e:
+            print(f"{Fore.RED}Error syncing config: {Style.RESET_ALL}{str(e)}")
+            if backup_path and os.path.exists(backup_path):
+                print(f"{Fore.YELLOW}Restoring from backup...{Style.RESET_ALL}")
+                shutil.copy2(backup_path, self.config_file)
+            raise
 
     def _load_servers(self) -> List[Dict]:
         """Load server configurations from YAML file."""
@@ -80,7 +226,7 @@ class SSHCommander:
         try:
             # Connect using either password or key-based authentication
             if 'key_file' in server:
-                key_file = server['key_file']
+                key_file = os.path.expanduser(server['key_file'])
                 if not os.path.exists(key_file):
                     raise FileNotFoundError(f"SSH key file not found: {key_file}")
                     
@@ -431,6 +577,13 @@ def print_examples():
     print(f"  ssh-commander list")
     print(f"\n  {Fore.LIGHTCYAN_EX}# Remove a server{Style.RESET_ALL}")
     print(f"  ssh-commander remove server1.example.com")
+    
+    print(f"\n  {Fore.LIGHTCYAN_EX}# Sync config from URL{Style.RESET_ALL}")
+    print(f"  ssh-commander sync https://example.com/servers.yaml")
+    print(f"  ssh-commander sync s3://my-bucket/servers.yaml")
+    print(f"  ssh-commander sync sftp://user@host/path/servers.yaml --key-file ~/.ssh/id_rsa")
+    print(f"  ssh-commander sync git://github.com/org/repo --branch main")
+    print(f"  ssh-commander sync --dry-run /path/to/servers.yaml")
 
 def main():
     # Create main parser with detailed description
@@ -456,6 +609,39 @@ def main():
         dest='command',
         title='Available Commands',
         metavar='<command>'
+    )
+    
+    # Sync command parser
+    sync_parser = subparsers.add_parser(
+        'sync',
+        help='Sync config from a URL',
+        description='Download and sync config file from a URL (supports http(s), s3://, git://, sftp://, file://)'
+    )
+    sync_parser.add_argument(
+        'url',
+        help='URL to download config from (e.g., https://example.com/servers.yaml)'
+    )
+    sync_parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Show what would happen without making changes'
+    )
+    sync_parser.add_argument(
+        '--verify',
+        action='store_true',
+        help='Verify YAML format and server entries after download'
+    )
+    sync_parser.add_argument(
+        '--username',
+        help='Username for SFTP authentication'
+    )
+    sync_parser.add_argument(
+        '--key-file',
+        help='SSH key file for SFTP/Git authentication'
+    )
+    sync_parser.add_argument(
+        '--branch',
+        help='Git branch to use (for git:// URLs)'
     )
     
     # Execute command parser
@@ -556,6 +742,15 @@ def main():
         
         elif args.command == 'list':
             commander.list_servers()
+        elif args.command == 'sync':
+            commander.sync_config(
+                args.url,
+                dry_run=args.dry_run,
+                verify=args.verify,
+                username=args.username,
+                key_file=args.key_file,
+                branch=args.branch
+            )
         
         elif args.command == 'remove':
             if commander.remove_server(args.hostname):

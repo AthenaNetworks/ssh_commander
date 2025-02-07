@@ -17,6 +17,7 @@ jobs:
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
+            build_rpm: true
           - os: ubuntu-20.04
             platform: linux
             arch: arm64
@@ -148,6 +149,35 @@ jobs:
         sha256sum ssh-commander_*.deb > ssh-commander_${VERSION}_amd64.deb.sha256
         cd ..
 
+    - name: Build RPM Package
+      if: matrix.build_rpm
+      run: |
+        # Install RPM build dependencies
+        sudo apt-get update
+        sudo apt-get install -y rpm rpmlint rpmdevtools python3-rpm-macros
+        
+        # Extract version from git tag
+        VERSION=${GITHUB_REF_NAME#v}
+        
+        # Create RPM build directories
+        rpmdev-setuptree
+        
+        # Create source tarball
+        tar -czf ~/rpmbuild/SOURCES/ssh-commander-${VERSION}.tar.gz \
+          --transform "s,^,ssh-commander-${VERSION}/," \
+          * .git* debian/ rpm/
+        
+        # Build RPM package
+        rpmbuild -bb \
+          --define "version ${VERSION}" \
+          rpm/ssh-commander.spec
+        
+        # Copy RPM to release directory and generate checksum
+        cp ~/rpmbuild/RPMS/x86_64/ssh-commander-*.rpm release/
+        cd release
+        sha256sum ssh-commander-*.rpm > ssh-commander-${VERSION}.el8.x86_64.rpm.sha256
+        cd ..
+
     - name: Generate SHA256 checksums (Unix)
       if: matrix.platform != 'windows'
       run: |
@@ -231,6 +261,7 @@ jobs:
             artifacts/*.zip
             artifacts/*.sha256
             artifacts/*.deb
+            artifacts/*.rpm
           body_path: release_notes.md
           draft: false
           prerelease: false

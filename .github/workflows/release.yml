@@ -8,7 +8,8 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.container && 'ubuntu-latest' || matrix.os }}
+    container: ${{ matrix.container && matrix.os || '' }}
     strategy:
       matrix:
         include:
@@ -17,7 +18,12 @@ jobs:
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
+          - os: centos:stream8
+            platform: linux
+            arch: x64
+            asset_name: ssh-commander-linux-x64-rpm
             build_rpm: true
+            container: true
           - os: ubuntu-20.04
             platform: linux
             arch: arm64
@@ -153,23 +159,22 @@ jobs:
       if: matrix.build_rpm
       run: |
         # Install RPM build dependencies
-        sudo apt-get update
-        sudo apt-get install -y rpm rpmlint rpmdevtools python3-rpm-macros
+        dnf install -y rpm-build rpmdevtools python3-devel python3-pip python3-setuptools
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
         
-        # Create RPM build directories
+        # Set up RPM build environment
         rpmdev-setuptree
         
         # Create source tarball
         tar -czf ~/rpmbuild/SOURCES/ssh-commander-${VERSION}.tar.gz \
-          --transform "s,^,ssh-commander-${VERSION}/," \
+          --transform 's,^,ssh-commander-${VERSION}/,' \
           * .git* debian/ rpm/
         
         # Build RPM package
         rpmbuild -bb \
-          --define "version ${VERSION}" \
+          --define 'version ${VERSION}' \
           rpm/ssh-commander.spec
         
         # Copy RPM to release directory and generate checksum
@@ -207,6 +212,7 @@ jobs:
           release/*.zip
           release/*.sha256
           release/*.deb
+          release/*.rpm
         if-no-files-found: error
 
   create-release:
@@ -232,9 +238,19 @@ jobs:
           echo "1. Download the appropriate archive for your platform:" >> release_notes.md
           echo "   - macOS ARM64: \`ssh-commander-macos-arm64.tar.gz\`" >> release_notes.md
           echo "   - macOS x64: \`ssh-commander-macos-x64.tar.gz\`" >> release_notes.md
-          echo "   - Linux x64: \`ssh-commander-linux-x64.tar.gz\`" >> release_notes.md
+          echo "   - Linux x64: \`ssh-commander-linux-x64.tar.gz\` (or \`.deb\`/\`.rpm\` packages)" >> release_notes.md
           echo "   - Linux ARM64: \`ssh-commander-linux-arm64.tar.gz\`" >> release_notes.md
           echo "   - Windows x64: \`ssh-commander-windows-x64.zip\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "   For Debian/Ubuntu systems, you can install the .deb package:" >> release_notes.md
+          echo "   \`\`\`bash" >> release_notes.md
+          echo "   sudo dpkg -i ssh-commander_*.deb" >> release_notes.md
+          echo "   \`\`\`" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "   For CentOS/RHEL systems, you can install the .rpm package:" >> release_notes.md
+          echo "   \`\`\`bash" >> release_notes.md
+          echo "   sudo rpm -i ssh-commander-*.rpm" >> release_notes.md
+          echo "   \`\`\`" >> release_notes.md
           echo "" >> release_notes.md
           echo "2. Extract the archive" >> release_notes.md
           echo "3. Run the installation script:" >> release_notes.md

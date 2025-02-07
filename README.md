@@ -24,6 +24,12 @@ SSH Commander is a powerful, colorful command-line tool for executing commands a
 sudo dpkg -i ssh-commander_*.deb
 ```
 
+If you encounter any dependency errors during installation, run:
+```bash
+sudo apt -f install
+```
+This will automatically install any missing dependencies and complete the installation.
+
 ### Option 2: Using Pre-built Binaries
 
 1. Download the latest release for your platform from the [releases page](https://github.com/AthenaNetworks/ssh_commander/releases)

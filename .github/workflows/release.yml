@@ -18,7 +18,7 @@ jobs:
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
-          - os: centos:stream8
+          - os: quay.io/centos/centos:stream8
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64-rpm

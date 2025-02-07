@@ -18,6 +18,7 @@ ssh-commander (1.0.30) unstable; urgency=medium
   * Improved config file location handling with proper priority order
   * Updated post-install message with more features and colorized output
   * Added RPM package support for CentOS/RHEL systems
+  * Added shell completion scripts for bash and zsh
 
  -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 11:07:03 +1000
 

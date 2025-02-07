@@ -24,7 +24,7 @@ warnings.filterwarnings(
 import sys
 import os
 import argparse
-from typing import List, Dict
+from typing import List, Dict, Union, Optional
 import yaml
 from getpass import getpass
 from colorama import init, Fore, Back, Style

@@ -48,9 +48,17 @@ mkdir -p %{buildroot}%{_sysconfdir}/ssh-commander
 install -m 755 dist/%{name} %{buildroot}%{_bindir}/%{name}
 install -m 644 servers.yaml.example %{buildroot}%{_sysconfdir}/ssh-commander/servers.yaml.example
 
+# Install shell completions
+mkdir -p %{buildroot}%{_datadir}/bash-completion/completions
+mkdir -p %{buildroot}%{_datadir}/zsh/site-functions
+install -m 644 completions/ssh-commander.bash %{buildroot}%{_datadir}/bash-completion/completions/ssh-commander
+install -m 644 completions/ssh-commander.zsh %{buildroot}%{_datadir}/zsh/site-functions/_ssh-commander
+
 %files
 %{_bindir}/%{name}
 %{_sysconfdir}/ssh-commander/servers.yaml.example
+%{_datadir}/bash-completion/completions/ssh-commander
+%{_datadir}/zsh/site-functions/_ssh-commander
 %doc README.md
 
 %changelog

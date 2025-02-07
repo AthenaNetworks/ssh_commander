@@ -27,6 +27,11 @@ override_dh_auto_build:
 
 override_dh_auto_install:
 	dh_install
+	# Install example config
+	install -D -m 0644 servers.yaml.example debian/ssh-commander/etc/ssh-commander/servers.yaml.example
+	# Install shell completions
+	install -D -m 0644 completions/ssh-commander.bash debian/ssh-commander/usr/share/bash-completion/completions/ssh-commander
+	install -D -m 0644 completions/ssh-commander.zsh debian/ssh-commander/usr/share/zsh/vendor-completions/_ssh-commander
 
 # Skip stripping binary (PyInstaller binary)
 override_dh_strip:

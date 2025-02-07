@@ -138,10 +138,6 @@ jobs:
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
-        NOW=$(date -R)
-        
-        # Create changelog
-        printf 'ssh-commander (%s) unstable; urgency=medium\n\n  * Release version %s\n\n -- GitHub Actions <actions@github.com>  %s\n' "$VERSION" "$VERSION" "$NOW" > debian/changelog
         
         # Build the package
         dpkg-buildpackage -us -uc -b

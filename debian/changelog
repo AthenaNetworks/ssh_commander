@@ -1,8 +1,107 @@
-ssh-commander (1.0.9) unstable; urgency=medium
+ssh-commander (1.0.29) unstable; urgency=medium
 
-  * Initial release
-  * Add standard config file locations
-  * Support for both password and key-based authentication
-  * Colorized output for better readability
+  * Improved dependency checking in install scripts
+  * Added better dependency documentation
+  * Fixed SSH key path expansion
+  * Removed debug print statement
+  * Added note about apt -f install for dependency resolution
 
- -- Your Name <your.email@example.com>  Tue, 05 Feb 2025 09:18:33 +1000
+ -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 10:56:24 +1000
+
+ssh-commander (1.0.28) unstable; urgency=medium
+
+  * Added server tags functionality
+  * Added --tags option for filtering commands by server tags
+  * Improved config file handling with priority-based loading
+  * Added --config argument for custom config file location
+  * Updated documentation with new features
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 10:34:42 +1000
+
+ssh-commander (1.0.27) unstable; urgency=medium
+
+  * Removed home directory storage requirement
+  * Updated installation scripts
+  * Changed default config location to ~/.config/ssh-commander
+  * Added strong security warning about password storage
+  * Fixed config path handling in add_server command
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 10:00:00 +1000
+
+ssh-commander (1.0.26-1.0.24) unstable; urgency=medium
+
+  * Added automatic config file creation when adding first server
+  * Added SHA256 checksum generation for .deb file
+  * Updated to Python 3.8 for better GLIBC compatibility
+  * Fixed config file installation
+  * Added postinst script
+  * Fixed binary installation path and name
+  * Added automatic version update in Python file when tagging
+  * Fixed release workflow configuration
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 09:00:00 +1000
+
+ssh-commander (1.0.23-1.0.20) unstable; urgency=medium
+
+  * Create config file automatically when adding first server
+  * Added SHA256 checksum generation for .deb file
+  * Updated to Python 3.8 for better GLIBC compatibility
+  * Fixed binary installation path and name
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 15:00:00 +1000
+
+ssh-commander (1.0.19-1.0.16) unstable; urgency=medium
+
+  * Fixed YAML syntax in workflow files
+  * Improved variable expansion handling
+  * Fixed changelog format
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 14:00:00 +1000
+
+ssh-commander (1.0.15-1.0.13) unstable; urgency=medium
+
+  * Improved Ctrl+C handling for proper exit and cleanup
+  * Added .deb files to release artifacts
+  * Refactored SSH command execution for consistent output streaming
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 13:00:00 +1000
+
+ssh-commander (1.0.12-1.0.10) unstable; urgency=medium
+
+  * Updated pip installation in Debian package build
+  * Added missing build dependencies for Debian package
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 12:00:00 +1000
+
+ssh-commander (1.0.9-1.0.7) unstable; urgency=medium
+
+  * Fixed Debian package configuration
+  * Fixed tar command for BSD compatibility
+  * Added Debian package support
+  * Added standard config file locations
+  * Added support for both password and key-based authentication
+  * Added colorized output for better readability
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 11:00:00 +1000
+
+ssh-commander (1.0.5-1.0.4) unstable; urgency=medium
+
+  * Fixed archive subdirectory structure
+  * Updated package to use ssh-commander subdirectory
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 10:00:00 +1000
+
+ssh-commander (1.0.3-1.0.1) unstable; urgency=medium
+
+  * Fixed Windows build process in release workflow
+  * Fixed release workflow for macOS builds
+  * Added multi-platform release support via GitHub Actions
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 09:00:00 +1000
+
+ssh-commander (1.0.0) unstable; urgency=medium
+
+  * Initial release of SSH Commander
+  * Added GNU GPL v3.0 license
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Wed, 06 Feb 2025 08:00:00 +1000

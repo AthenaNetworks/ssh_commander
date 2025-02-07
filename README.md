@@ -68,18 +68,19 @@ The configuration file uses YAML format and supports both key-based and password
   username: admin
   key_file: ~/.ssh/id_rsa  # Path to your SSH key
   port: 22  # Optional, defaults to 22
+  tags: [prod, web]  # Optional, defaults to ['default']
 
 # Password authentication
 - hostname: db1.example.com
   username: dbadmin
   password: your_secure_password  # Not recommended for production use
   port: 2222
+  tags: [prod, db]  # Optional server tags
 ```
 
 ### Security Notes
 
 ⚠️ **Important Security Warning**:
-- **NEVER store SSH passwords in the config file**
   - Passwords are stored in plaintext and are NOT secure
   - Anyone with access to your config file can see the passwords
   - This includes backup systems, cloud sync, etc.
@@ -91,7 +92,10 @@ The configuration file uses YAML format and supports both key-based and password
   - Use `key_file: ~/.ssh/id_ed25519` in config
 
 ### Configuration Security
-- Config file is stored in `~/.config/ssh-commander/servers.yaml`
+- Config file is searched for in the following order:
+  1. Path specified by `--config` argument
+  2. `servers.yaml` in the same directory as the executable
+  3. `~/.config/ssh-commander/servers.yaml`
 - File permissions are set to user-only read/write (600)
 - SSH key paths support `~` expansion to your home directory
 
@@ -121,9 +125,19 @@ ssh-commander remove web1.example.com
 ssh-commander exec -c "uptime"
 ```
 
-2. Run multiple commands from a file:
+2. Run a command on servers with specific tags:
+```bash
+ssh-commander exec -c "uptime" -t "prod,web"
+```
+
+3. Run multiple commands from a file:
 ```bash
 ssh-commander exec -f commands.txt
+```
+
+4. Run commands from file on specific tags:
+```bash
+ssh-commander exec -f commands.txt -t "staging"
 ```
 
 Example `commands.txt`:

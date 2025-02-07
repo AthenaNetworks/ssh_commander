@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-__version__ = '1.0.27'
+__version__ = '1.0.28'
+__author__ = 'Josh Finlay'
+__email__ = 'josh@athenanetworks.com.au'
+__description__ = 'SSH Commander'
+__url__ = 'https://github.com/AthenaNetworks/ssh_commander'
 
 import warnings
 import os
@@ -42,6 +46,7 @@ def get_paramiko():
 class SSHCommander:
     def __init__(self, config_file: str = None):
         self.config_file = config_file or os.path.expanduser("~/.config/ssh-commander/servers.yaml")
+        print("Config file is set to:", self.config_file)
         self.servers = self._load_servers()
         self._active_sessions = []  # Keep track of active SSH sessions
         
@@ -201,16 +206,29 @@ class SSHCommander:
                 print(f"Error during cleanup: {e}")
         self._active_sessions.clear()
 
-    def run_command_on_all(self, command: str):
-        """Execute a command on all servers."""
+    def run_command_on_all(self, command: str, tags: List[str] = None):
+        """Execute a command on servers matching the specified tags.
+        
+        Args:
+            command: The command to execute
+            tags: Optional list of tags to filter servers by. If None, runs on all servers.
+        """
         if not self.servers:
             print(f"{Fore.YELLOW}No servers configured. Use 'ssh-commander add' to add servers.{Style.RESET_ALL}")
             return
             
+        # Filter servers by tags if specified
+        target_servers = self.servers
+        if tags:
+            target_servers = [s for s in self.servers if any(tag in s.get('tags', ['default']) for tag in tags)]
+            if not target_servers:
+                print(f"{Fore.YELLOW}No servers found with tags: {', '.join(tags)}{Style.RESET_ALL}")
+                return
+            
         print(f"{Fore.CYAN}Executing command: {Fore.WHITE}{command}{Style.RESET_ALL}")
         try:
-            for server in self.servers:
-                print(f"\n{Fore.LIGHTBLUE_EX}Executing on {server['hostname']}{Style.RESET_ALL}")
+            for server in target_servers:
+                print(f"\n{Fore.LIGHTBLUE_EX}Executing on {server['hostname']} ({', '.join(server.get('tags', ['default']))}){Style.RESET_ALL}")
                 _, error = self.execute_command(server, command, stream_output=True)
                 if error:
                     print(error)
@@ -218,11 +236,15 @@ class SSHCommander:
             print(f"\n{Fore.YELLOW}Command execution interrupted. Cleaning up...{Style.RESET_ALL}")
             raise  # Re-raise to be caught by main()
 
-    def run_commands_from_file(self, command_file: str):
-        """Execute commands from a file on all servers.
+    def run_commands_from_file(self, command_file: str, tags: List[str] = None):
+        """Execute commands from a file on servers matching the specified tags.
         
         For each server, all commands are executed in sequence using a single SSH connection.
         This is more efficient than running each command across all servers.
+        
+        Args:
+            command_file: Path to file containing commands to execute
+            tags: Optional list of tags to filter servers by. If None, runs on all servers.
         """
         if not self.servers:
             print(f"{Fore.YELLOW}No servers configured. Use 'ssh-commander add' to add servers.{Style.RESET_ALL}")
@@ -241,8 +263,16 @@ class SSHCommander:
             return
 
         try:
-            for server in self.servers:
-                print(f"\n{Fore.CYAN}=== Executing commands on {server['hostname']} ==={Style.RESET_ALL}")
+            # Filter servers by tags if specified
+            target_servers = self.servers
+            if tags:
+                target_servers = [s for s in self.servers if any(tag in s.get('tags', ['default']) for tag in tags)]
+                if not target_servers:
+                    print(f"{Fore.YELLOW}No servers found with tags: {', '.join(tags)}{Style.RESET_ALL}")
+                    return
+                    
+            for server in target_servers:
+                print(f"\n{Fore.CYAN}=== Executing commands on {server['hostname']} ({', '.join(server.get('tags', ['default']))}) ==={Style.RESET_ALL}")
                 client, error = self._connect_to_server(server)
                 
                 if error:
@@ -339,6 +369,13 @@ class SSHCommander:
         if port and port.isdigit():
             server['port'] = int(port)
         
+        # Handle tags
+        tags_input = input("Enter tags (comma-separated, default: 'default'): ").strip()
+        if tags_input:
+            server['tags'] = [tag.strip() for tag in tags_input.split(',') if tag.strip()]
+        if not tags_input or not server['tags']:
+            server['tags'] = ['default']
+        
         self.servers.append(server)
         self._save_servers()
         print(f"\nServer {server['hostname']} added successfully!")
@@ -368,6 +405,8 @@ class SSHCommander:
             print(f"   {Fore.LIGHTBLUE_EX}Auth Type:{Style.RESET_ALL} {auth_color}{auth_type}{Style.RESET_ALL}")
             if 'port' in server:
                 print(f"   {Fore.LIGHTBLUE_EX}Port:{Style.RESET_ALL} {server['port']}")
+            tags = server.get('tags', ['default'])
+            print(f"   {Fore.LIGHTBLUE_EX}Tags:{Style.RESET_ALL} {', '.join(tags)}")
 
     def _save_servers(self):
         """Save the current server configuration to file."""
@@ -380,8 +419,12 @@ def print_examples():
     print(f"\n{Fore.LIGHTGREEN_EX}Examples:{Style.RESET_ALL}")
     print(f"  {Fore.LIGHTCYAN_EX}# Execute a command on all servers{Style.RESET_ALL}")
     print(f"  ssh-commander exec -c 'uptime'")
+    print(f"\n  {Fore.LIGHTCYAN_EX}# Execute a command on servers with specific tags{Style.RESET_ALL}")
+    print(f"  ssh-commander exec -c 'uptime' -t 'prod,web'")
     print(f"\n  {Fore.LIGHTCYAN_EX}# Execute multiple commands from a file{Style.RESET_ALL}")
     print(f"  ssh-commander exec -f commands.txt")
+    print(f"\n  {Fore.LIGHTCYAN_EX}# Execute commands from file on specific tags{Style.RESET_ALL}")
+    print(f"  ssh-commander exec -f commands.txt -t 'staging'")
     print(f"\n  {Fore.LIGHTCYAN_EX}# Add a new server{Style.RESET_ALL}")
     print(f"  ssh-commander add")
     print(f"\n  {Fore.LIGHTCYAN_EX}# List configured servers{Style.RESET_ALL}")
@@ -418,8 +461,8 @@ def main():
     # Execute command parser
     exec_parser = subparsers.add_parser(
         'exec',
-        help='Execute commands on all configured servers',
-        description='Execute a single command or commands from a file on all configured servers'
+        help='Execute commands on servers with specified tags',
+        description='Execute a single command or commands from a file on servers with specified tags'
     )
     exec_group = exec_parser.add_mutually_exclusive_group(required=True)
     exec_group.add_argument(
@@ -433,6 +476,11 @@ def main():
         help='File containing commands to execute (one per line)',
         metavar='FILE',
         dest='exec_file'  # Use a different name to avoid conflict
+    )
+    exec_parser.add_argument(
+        '-t', '--tags',
+        help='Comma-separated list of tags to filter servers (default: all servers)',
+        metavar='TAGS'
     )
     
     # Add server parser
@@ -477,8 +525,8 @@ def main():
                 sys.exit(1)
             commander = SSHCommander(config_file=args.config)
         else:
-            # Priority 2: servers.yaml in executable directory
-            config_file = os.path.join(os.path.dirname(__file__), 'servers.yaml')
+            # Priority 2: servers.yaml in application directory
+            config_file = os.path.join(os.path.dirname(sys.executable), 'servers.yaml')
             if os.path.isfile(config_file):
                 commander = SSHCommander(config_file=config_file)
             else:
@@ -486,15 +534,18 @@ def main():
                 commander = SSHCommander()
         
         if args.command == 'exec':
+            # Parse tags if provided
+            tags = [t.strip() for t in args.tags.split(',')] if args.tags else None
+            
             if args.exec_command:  # Check if -c was used
-                commander.run_command_on_all(args.exec_command)
+                commander.run_command_on_all(args.exec_command, tags=tags)
             elif args.exec_file:  # Check if -f was used
                 if not os.path.exists(args.exec_file):
                     print(f"{Fore.RED}Error: Command file '{args.exec_file}' not found{Style.RESET_ALL}")
                     print(f"\nExample command file format:")
                     print(f"  # Check system uptime\n  uptime\n  # Check disk space\n  df -h")
                     sys.exit(1)
-                commander.run_commands_from_file(args.exec_file)
+                commander.run_commands_from_file(args.exec_file, tags=tags)
             else:
                 print(f"{Fore.RED}Error: No command specified. Use -c 'command' or -f file{Style.RESET_ALL}")
                 exec_parser.print_help()

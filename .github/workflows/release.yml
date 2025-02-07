@@ -55,7 +55,19 @@ jobs:
     - name: Set up Python (Container)
       if: ${{ matrix.container }}
       run: |
-        dnf install -y python3.8 python3.8-devel
+        # Fix DNS resolution
+        echo "nameserver 8.8.8.8" > /etc/resolv.conf
+        
+        # Configure CentOS repositories
+        dnf install -y 'dnf-command(config-manager)'
+        dnf config-manager --set-enabled powertools
+        
+        # Add EPEL repository for Python 3.8
+        dnf install -y epel-release
+        
+        # Install Python 3.8
+        dnf module enable -y python38
+        dnf install -y python38 python38-devel
         alternatives --set python3 /usr/bin/python3.8
         python3 -m ensurepip
         
@@ -171,8 +183,19 @@ jobs:
     - name: Build RPM Package
       if: matrix.build_rpm
       run: |
+        # Fix DNS resolution
+        echo "nameserver 8.8.8.8" > /etc/resolv.conf
+        
+        # Configure CentOS repositories
+        dnf install -y 'dnf-command(config-manager)'
+        dnf config-manager --set-enabled powertools
+        
+        # Add EPEL repository for Python 3.8
+        dnf install -y epel-release
+        
         # Install RPM build dependencies
-        dnf install -y rpm-build rpmdevtools python3.8 python3.8-devel python3-pip python3-setuptools
+        dnf module enable -y python38
+        dnf install -y rpm-build rpmdevtools python38 python38-devel python3-pip python3-setuptools
         alternatives --set python3 /usr/bin/python3.8
         python3 -m ensurepip
         

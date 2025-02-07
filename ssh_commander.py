@@ -556,7 +556,7 @@ class SSHCommander:
 
     def _save_servers(self):
         """Save the current server configuration to file."""
-        self._ensure_config_dir()
+        os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
         with open(self.config_file, 'w') as f:
             yaml.safe_dump(self.servers, f)
 

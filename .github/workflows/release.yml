@@ -47,14 +47,27 @@ jobs:
         fetch-depth: 0
        
     - name: Set up Python
+      if: ${{ !matrix.container }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.8'
         
+    - name: Set up Python (Container)
+      if: ${{ matrix.container }}
+      run: |
+        dnf install -y python3.8 python3.8-devel
+        alternatives --set python3 /usr/bin/python3.8
+        python3 -m ensurepip
+        
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        if [ "${{ matrix.container }}" = "true" ]; then
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
+        else
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        fi
         
     - name: Build with PyInstaller
       run: |
@@ -159,7 +172,9 @@ jobs:
       if: matrix.build_rpm
       run: |
         # Install RPM build dependencies
-        dnf install -y rpm-build rpmdevtools python3-devel python3-pip python3-setuptools
+        dnf install -y rpm-build rpmdevtools python3.8 python3.8-devel python3-pip python3-setuptools
+        alternatives --set python3 /usr/bin/python3.8
+        python3 -m ensurepip
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
@@ -172,9 +187,15 @@ jobs:
           --transform 's,^,ssh-commander-${VERSION}/,' \
           * .git* debian/ rpm/
         
+        # Install build requirements
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -r requirements.txt
+        python3 -m pip install pyinstaller
+        
         # Build RPM package
         rpmbuild -bb \
           --define 'version ${VERSION}' \
+          --define 'python_exe /usr/bin/python3.8' \
           rpm/ssh-commander.spec
         
         # Copy RPM to release directory and generate checksum

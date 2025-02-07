@@ -25,8 +25,8 @@ It supports server tags for grouping, key-based authentication, and configuratio
 %autosetup
 
 %build
-python3 -m pip install --no-deps -r requirements.txt
-pyinstaller --onefile --noupx --name %{name} \
+%{python_exe} -m pip install --no-deps -r requirements.txt
+%{python_exe} -m PyInstaller.pyinstaller --onefile --noupx --name %{name} \
   --exclude-module _bootlocale \
   --exclude-module PIL \
   --exclude-module numpy \

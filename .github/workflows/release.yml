@@ -8,8 +8,7 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.container && 'ubuntu-latest' || matrix.os }}
-    container: ${{ matrix.container && matrix.os || '' }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
@@ -18,12 +17,7 @@ jobs:
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
-          - os: quay.io/centos/centos:stream8
-            platform: linux
-            arch: x64
-            asset_name: ssh-commander-linux-x64-rpm
             build_rpm: true
-            container: true
           - os: ubuntu-20.04
             platform: linux
             arch: arm64
@@ -52,34 +46,10 @@ jobs:
       with:
         python-version: '3.8'
         
-    - name: Set up Python (Container)
-      if: ${{ matrix.container }}
-      run: |
-        # Fix DNS resolution
-        echo "nameserver 8.8.8.8" > /etc/resolv.conf
-        
-        # Configure CentOS repositories
-        dnf install -y 'dnf-command(config-manager)'
-        dnf config-manager --set-enabled powertools
-        
-        # Add EPEL repository for Python 3.8
-        dnf install -y epel-release
-        
-        # Install Python 3.8
-        dnf module enable -y python38
-        dnf install -y python38 python38-devel
-        alternatives --set python3 /usr/bin/python3.8
-        python3 -m ensurepip
-        
     - name: Install dependencies
       run: |
-        if [ "${{ matrix.container }}" = "true" ]; then
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r requirements.txt
-        else
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-        fi
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
         
     - name: Build with PyInstaller
       run: |
@@ -183,43 +153,32 @@ jobs:
     - name: Build RPM Package
       if: matrix.build_rpm
       run: |
-        # Fix DNS resolution
-        echo "nameserver 8.8.8.8" > /etc/resolv.conf
-        
-        # Configure CentOS repositories
-        dnf install -y 'dnf-command(config-manager)'
-        dnf config-manager --set-enabled powertools
-        
-        # Add EPEL repository for Python 3.8
-        dnf install -y epel-release
-        
-        # Install RPM build dependencies
-        dnf module enable -y python38
-        dnf install -y rpm-build rpmdevtools python38 python38-devel python3-pip python3-setuptools
-        alternatives --set python3 /usr/bin/python3.8
-        python3 -m ensurepip
+        # Install RPM build tools
+        sudo apt-get update
+        sudo apt-get install -y rpm rpm-build rpmdevtools
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
         
         # Set up RPM build environment
-        rpmdev-setuptree
+        mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
         
         # Create source tarball
         tar -czf ~/rpmbuild/SOURCES/ssh-commander-${VERSION}.tar.gz \
-          --transform 's,^,ssh-commander-${VERSION}/,' \
+          --transform "s,^,ssh-commander-${VERSION}/," \
           * .git* debian/ rpm/
-        
-        # Install build requirements
-        python3 -m pip install --upgrade pip
-        python3 -m pip install -r requirements.txt
-        python3 -m pip install pyinstaller
         
         # Build RPM package
         rpmbuild -bb \
-          --define 'version ${VERSION}' \
-          --define 'python_exe /usr/bin/python3.8' \
+          --define "version ${VERSION}" \
+          --define "python_exe $(which python3)" \
           rpm/ssh-commander.spec
+        
+        # Copy RPM to release directory and generate checksum
+        cp ~/rpmbuild/RPMS/x86_64/ssh-commander-*.rpm release/
+        cd release
+        sha256sum ssh-commander-*.rpm > ssh-commander-${VERSION}.el8.x86_64.rpm.sha256
+        cd ..
         
         # Copy RPM to release directory and generate checksum
         cp ~/rpmbuild/RPMS/x86_64/ssh-commander-*.rpm release/

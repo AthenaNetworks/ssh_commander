@@ -153,36 +153,17 @@ jobs:
     - name: Build RPM Package
       if: matrix.build_rpm
       run: |
-        # Install RPM build tools
+        # Add RPM repository and install build tools
         sudo apt-get update
-        sudo apt-get install -y rpm rpm-build rpmdevtools
+        sudo apt-get install -y alien rpm
         
         # Extract version from git tag
         VERSION=${GITHUB_REF_NAME#v}
         
-        # Set up RPM build environment
-        mkdir -p ~/rpmbuild/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-        
-        # Create source tarball
-        tar -czf ~/rpmbuild/SOURCES/ssh-commander-${VERSION}.tar.gz \
-          --transform "s,^,ssh-commander-${VERSION}/," \
-          * .git* debian/ rpm/
-        
-        # Build RPM package
-        rpmbuild -bb \
-          --define "version ${VERSION}" \
-          --define "python_exe $(which python3)" \
-          rpm/ssh-commander.spec
-        
-        # Copy RPM to release directory and generate checksum
-        cp ~/rpmbuild/RPMS/x86_64/ssh-commander-*.rpm release/
+        # Convert .deb to .rpm using alien
         cd release
-        sha256sum ssh-commander-*.rpm > ssh-commander-${VERSION}.el8.x86_64.rpm.sha256
-        cd ..
-        
-        # Copy RPM to release directory and generate checksum
-        cp ~/rpmbuild/RPMS/x86_64/ssh-commander-*.rpm release/
-        cd release
+        sudo alien --to-rpm ssh-commander_${VERSION}_amd64.deb
+        mv ssh-commander-*.rpm ssh-commander-${VERSION}.el8.x86_64.rpm
         sha256sum ssh-commander-*.rpm > ssh-commander-${VERSION}.el8.x86_64.rpm.sha256
         cd ..
 

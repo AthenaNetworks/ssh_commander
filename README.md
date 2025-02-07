@@ -2,6 +2,8 @@
 
 SSH Commander is a powerful, colorful command-line tool for executing commands across multiple SSH servers simultaneously. It supports both password and key-based authentication, custom ports, and can execute both single commands and command files.
 
+![SSH Commander Demo](docs/ssh-commander.gif)
+
 ## Features
 
 - 🔑 Supports both password and key-based authentication

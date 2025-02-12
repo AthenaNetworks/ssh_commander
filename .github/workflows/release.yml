@@ -12,13 +12,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-          - os: ubuntu-20.04
+          - os: ubuntu-24.04
             platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
@@ -210,7 +210,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:

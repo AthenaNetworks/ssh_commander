@@ -69,7 +69,16 @@ jobs:
             --exclude-module pydoc \
             ssh_commander.py
         else
-          pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} \
+          # Set target architecture based on matrix config
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            export ARCHFLAGS="-arch x86_64"
+            TARGET_ARCH="--target-arch x86_64"
+          elif [ "${{ matrix.arch }}" = "arm64" ]; then
+            export ARCHFLAGS="-arch arm64"
+            TARGET_ARCH="--target-arch arm64"
+          fi
+          
+          pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} $TARGET_ARCH \
             --exclude-module _bootlocale \
             --exclude-module PIL \
             --exclude-module numpy \

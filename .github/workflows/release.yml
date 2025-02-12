@@ -154,9 +154,11 @@ jobs:
         dpkg-buildpackage -us -uc -b
         
         # Copy the .deb file to release directory and generate checksum
+        mkdir -p release
         cp ../ssh-commander_*.deb release/
         cd release
-        sha256sum ssh-commander_*.deb > ssh-commander_${VERSION}_amd64.deb.sha256
+        DEB_FILE=$(ls ssh-commander_*.deb)
+        sha256sum "$DEB_FILE" > "$DEB_FILE.sha256"
         cd ..
 
     - name: Build RPM Package
@@ -171,9 +173,11 @@ jobs:
         
         # Convert .deb to .rpm using alien
         cd release
-        sudo alien --to-rpm ssh-commander_${VERSION}_amd64.deb
-        mv ssh-commander-*.rpm ssh-commander-${VERSION}.el8.x86_64.rpm
-        sha256sum ssh-commander-*.rpm > ssh-commander-${VERSION}.el8.x86_64.rpm.sha256
+        DEB_FILE=$(ls ssh-commander_*.deb)
+        sudo alien --to-rpm "$DEB_FILE"
+        RPM_FILE="ssh-commander-${VERSION}.el8.x86_64.rpm"
+        mv ssh-commander-*.rpm "$RPM_FILE"
+        sha256sum "$RPM_FILE" > "$RPM_FILE.sha256"
         cd ..
 
     - name: Generate SHA256 checksums (Unix)

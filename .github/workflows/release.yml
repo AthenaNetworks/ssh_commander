@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.platform }}-${{ matrix.arch }}
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64]
     strategy:
       matrix:
         include:
@@ -238,7 +238,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64]
     permissions:
       contents: write
     steps:

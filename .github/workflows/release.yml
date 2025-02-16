@@ -68,57 +68,43 @@ jobs:
         
     - name: Build with PyInstaller
       run: |
-        if [ "${{ matrix.platform }}" = "windows" ]; then
-          if [ "${{ matrix.platform }}" = "linux" ]; then
-            python3 -m PyInstaller --onefile --noupx --name ${{ matrix.asset_name }} \
+        # Set target architecture based on matrix config
+        if [ "${{ matrix.arch }}" = "x64" ]; then
+          export ARCHFLAGS="-arch x86_64"
+          TARGET_ARCH="--target-arch x86_64"
+        elif [ "${{ matrix.arch }}" = "arm64" ]; then
+          if [ "${{ matrix.cross_compile }}" = "true" ]; then
+            export CC="aarch64-linux-gnu-gcc"
+            export CXX="aarch64-linux-gnu-g++"
+            export ARCHFLAGS="-arch arm64"
+            TARGET_ARCH="--target-arch aarch64"
           else
-            pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} \
+            export ARCHFLAGS="-arch arm64"
+            TARGET_ARCH="--target-arch arm64"
           fi
-            --exclude-module _bootlocale \
-            --exclude-module PIL \
-            --exclude-module numpy \
-            --exclude-module pandas \
-            --exclude-module matplotlib \
-            --exclude-module tkinter \
-            --exclude-module unittest \
-            --exclude-module email \
-            --exclude-module http \
-            --exclude-module html \
-            --exclude-module xml \
-            --exclude-module pydoc \
-            ssh_commander.py
-        else
-          # Set target architecture based on matrix config
-          if [ "${{ matrix.arch }}" = "x64" ]; then
-            export ARCHFLAGS="-arch x86_64"
-            TARGET_ARCH="--target-arch x86_64"
-          elif [ "${{ matrix.arch }}" = "arm64" ]; then
-            if [ "${{ matrix.cross_compile }}" = "true" ]; then
-              export CC="aarch64-linux-gnu-gcc"
-              export CXX="aarch64-linux-gnu-g++"
-              export ARCHFLAGS="-arch arm64"
-              TARGET_ARCH="--target-arch aarch64"
-            else
-              export ARCHFLAGS="-arch arm64"
-              TARGET_ARCH="--target-arch arm64"
-            fi
-          fi
-          
-          python3 -m PyInstaller --onefile --noupx --name ${{ matrix.asset_name }} $TARGET_ARCH \
-            --exclude-module _bootlocale \
-            --exclude-module PIL \
-            --exclude-module numpy \
-            --exclude-module pandas \
-            --exclude-module matplotlib \
-            --exclude-module tkinter \
-            --exclude-module unittest \
-            --exclude-module email \
-            --exclude-module http \
-            --exclude-module html \
-            --exclude-module xml \
-            --exclude-module pydoc \
-            ssh_commander.py
         fi
+
+        # Build command based on platform
+        if [ "${{ matrix.platform }}" = "windows" ]; then
+          PYTHON_CMD="python"
+        else
+          PYTHON_CMD="python3"
+        fi
+
+        $PYTHON_CMD -m PyInstaller --onefile --noupx --name ${{ matrix.asset_name }} $TARGET_ARCH \
+          --exclude-module _bootlocale \
+          --exclude-module PIL \
+          --exclude-module numpy \
+          --exclude-module pandas \
+          --exclude-module matplotlib \
+          --exclude-module tkinter \
+          --exclude-module unittest \
+          --exclude-module email \
+          --exclude-module http \
+          --exclude-module html \
+          --exclude-module xml \
+          --exclude-module pydoc \
+          ssh_commander.py
       shell: bash
         
     - name: Package Release (Unix)

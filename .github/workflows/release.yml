@@ -41,8 +41,8 @@ jobs:
       with:
         fetch-depth: 0
        
-    - name: Set up Python (Windows)
-      if: matrix.platform == 'windows'
+    - name: Set up Python (macOS/Windows)
+      if: matrix.platform == 'macos' || matrix.platform == 'windows'
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'

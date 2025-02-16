@@ -1,3 +1,26 @@
+ssh-commander (1.0.32) unstable; urgency=medium
+
+  * Major CI/CD Pipeline Improvements:
+    - Implemented hybrid GitHub Actions runner strategy:
+      + Self-hosted Debian 12 runner for Linux builds
+      + GitHub-hosted runners for macOS and Windows
+    - Enhanced cross-platform build matrix:
+      + Linux: x64 and arm64 architectures
+      + macOS: Universal binary support (x64 and arm64)
+      + Windows: x64 architecture
+    - Optimized Python environment setup:
+      + Linux: System Python 3.11 with externally managed environment handling
+      + macOS/Windows: actions/setup-python@v4 with Python 3.11
+    - Improved build process:
+      + Platform-specific shell usage (bash/PowerShell)
+      + Optimized PyInstaller configurations per platform
+      + Excluded unnecessary Python modules for smaller binaries
+    - Fixed build issues:
+      + Added --break-system-packages for Debian pip installations
+      + Corrected shell syntax for Windows PowerShell steps
+      + Removed redundant shell specifications
+    - Enhanced error handling and logging across all platforms
+
 ssh-commander (1.0.30) unstable; urgency=medium
 
   * Added config sync feature with support for multiple protocols:

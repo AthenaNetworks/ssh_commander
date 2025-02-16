@@ -9,7 +9,7 @@ override_dh_auto_clean:
 
 # Install pyinstaller in the build environment
 override_dh_auto_build:
-	sudo pip3 install pyinstaller
+	sudo pip3 install --break-system-packages pyinstaller
 	pyinstaller --onefile --noupx --name ssh-commander \
 		--exclude-module _bootlocale \
 		--exclude-module PIL \

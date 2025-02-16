@@ -12,13 +12,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: debian-12
+          - os: athena--github-runner
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-          - os: debian-12
+          - os: athena--github-runner
             platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
@@ -213,7 +213,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: debian-12
+    runs-on: athena--github-runner
     permissions:
       contents: write
     steps:

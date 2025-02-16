@@ -7,19 +7,17 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.runs-on }}
+    name: Build ${{ matrix.platform }}-${{ matrix.arch }}
+    runs-on: self-hosted
     strategy:
       matrix:
         include:
-          - runs-on: [self-hosted, Linux, X64]
-            platform: linux
+          - platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-          - runs-on: [self-hosted, Linux, X64]
-            platform: linux
+          - platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
             cross_compile: true
@@ -240,7 +238,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
     permissions:
       contents: write
     steps:

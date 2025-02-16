@@ -12,18 +12,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: debian-12
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-            container: debian:12
-          - os: ubuntu-latest
+          - os: debian-12
             platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
-            container: debian:12
           - os: macos-latest
             platform: macos
             arch: x64
@@ -43,16 +41,9 @@ jobs:
         fetch-depth: 0
        
     - name: Set up Python
-      if: ${{ !matrix.container }}
       uses: actions/setup-python@v5
       with:
         python-version: '3.8'
-
-    - name: Set up container Python
-      if: ${{ matrix.container }}
-      run: |
-        apt-get update
-        apt-get install -y python3 python3-pip python3-venv
         
     - name: Install dependencies
       run: |
@@ -222,7 +213,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: debian-12
     permissions:
       contents: write
     steps:

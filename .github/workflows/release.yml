@@ -50,8 +50,9 @@ jobs:
     - name: Set up build environment (Linux)
       if: matrix.platform == 'linux'
       run: |
+        sudo DEBIAN_FRONTEND=noninteractive apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip
         if [ "${{ matrix.cross_compile }}" = "true" ]; then
-          sudo DEBIAN_FRONTEND=noninteractive apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         fi
 

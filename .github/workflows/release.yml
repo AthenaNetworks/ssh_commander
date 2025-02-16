@@ -12,16 +12,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: [self-hosted, athena--github-runner]
+          - os: [self-hosted, Linux, X64]
             platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-          - os: [self-hosted, athena--github-runner]
-            platform: linux
-            arch: arm64
-            asset_name: ssh-commander-linux-arm64
           - os: macos-latest
             platform: macos
             arch: x64
@@ -213,7 +209,7 @@ jobs:
 
   create-release:
     needs: build
-    runs-on: [self-hosted, athena--github-runner]
+    runs-on: [self-hosted, Linux, X64]
     permissions:
       contents: write
     steps:

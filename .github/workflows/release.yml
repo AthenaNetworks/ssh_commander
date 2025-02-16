@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.platform }}-${{ matrix.arch }}
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
         include:

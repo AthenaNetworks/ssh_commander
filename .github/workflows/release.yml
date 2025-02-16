@@ -56,17 +56,26 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         fi
 
-    - name: Install dependencies
+    - name: Install dependencies (Linux/macOS)
+      if: matrix.platform != 'windows'
       run: |
         if [ "${{ matrix.platform }}" = "linux" ]; then
           python3 -m pip install --break-system-packages --upgrade pip
           python3 -m pip install --break-system-packages -r requirements.txt
         else
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
         fi
+
+    - name: Install dependencies (Windows)
+      if: matrix.platform == 'windows'
+      shell: pwsh
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
         
-    - name: Build with PyInstaller
+    - name: Build with PyInstaller (Linux/macOS)
+      if: matrix.platform != 'windows'
       run: |
         # Set target architecture based on matrix config
         if [ "${{ matrix.arch }}" = "x64" ]; then
@@ -84,14 +93,7 @@ jobs:
           fi
         fi
 
-        # Build command based on platform
-        if [ "${{ matrix.platform }}" = "windows" ]; then
-          PYTHON_CMD="python"
-        else
-          PYTHON_CMD="python3"
-        fi
-
-        $PYTHON_CMD -m PyInstaller --onefile --noupx --name ${{ matrix.asset_name }} $TARGET_ARCH \
+        python3 -m PyInstaller --onefile --noupx --name ${{ matrix.asset_name }} $TARGET_ARCH \
           --exclude-module _bootlocale \
           --exclude-module PIL \
           --exclude-module numpy \
@@ -104,6 +106,25 @@ jobs:
           --exclude-module html \
           --exclude-module xml \
           --exclude-module pydoc \
+          ssh_commander.py
+
+    - name: Build with PyInstaller (Windows)
+      if: matrix.platform == 'windows'
+      shell: pwsh
+      run: |
+        pyinstaller --onefile --noupx --name ${{ matrix.asset_name }} `
+          --exclude-module _bootlocale `
+          --exclude-module PIL `
+          --exclude-module numpy `
+          --exclude-module pandas `
+          --exclude-module matplotlib `
+          --exclude-module tkinter `
+          --exclude-module unittest `
+          --exclude-module email `
+          --exclude-module http `
+          --exclude-module html `
+          --exclude-module xml `
+          --exclude-module pydoc `
           ssh_commander.py
       shell: bash
         

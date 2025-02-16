@@ -23,14 +23,14 @@ jobs:
             arch: arm64
             asset_name: ssh-commander-linux-arm64
             cross_compile: true
-          - runs-on: macos-latest
-            platform: macos
-            arch: x64
-            asset_name: ssh-commander-macos-x64
           - runs-on: macos-14
             platform: macos
             arch: arm64
             asset_name: ssh-commander-macos-arm64
+          - runs-on: macos-13
+            platform: macos
+            arch: x64
+            asset_name: ssh-commander-macos-x64
           - runs-on: windows-latest
             platform: windows
             arch: x64

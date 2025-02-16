@@ -21,15 +21,15 @@ jobs:
             arch: arm64
             asset_name: ssh-commander-linux-arm64
             cross_compile: true
-          - os: macos-latest
+          - runs-on: macos-latest
             platform: macos
             arch: x64
             asset_name: ssh-commander-macos-x64
-          - os: macos-14
+          - runs-on: macos-14
             platform: macos
             arch: arm64
             asset_name: ssh-commander-macos-arm64
-          - os: windows-latest
+          - runs-on: windows-latest
             platform: windows
             arch: x64
             asset_name: ssh-commander-windows-x64
@@ -39,8 +39,8 @@ jobs:
       with:
         fetch-depth: 0
        
-    - name: Set up Python (non-Linux)
-      if: matrix.platform != 'linux'
+    - name: Set up Python (macOS/Windows)
+      if: matrix.platform == 'macos' || matrix.platform == 'windows'
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'

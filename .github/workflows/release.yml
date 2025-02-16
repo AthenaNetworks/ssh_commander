@@ -126,7 +126,6 @@ jobs:
           --exclude-module xml `
           --exclude-module pydoc `
           ssh_commander.py
-      shell: bash
         
     - name: Package Release (Unix)
       if: matrix.platform != 'windows'

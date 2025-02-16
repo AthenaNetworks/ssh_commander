@@ -12,12 +12,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - platform: linux
+          - runs-on: [self-hosted, Linux, X64]
+            platform: linux
             arch: x64
             asset_name: ssh-commander-linux-x64
             build_deb: true
             build_rpm: true
-          - platform: linux
+          - runs-on: [self-hosted, Linux, X64]
+            platform: linux
             arch: arm64
             asset_name: ssh-commander-linux-arm64
             cross_compile: true

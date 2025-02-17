@@ -27,7 +27,7 @@ jobs:
             platform: macos
             arch: arm64
             asset_name: ssh-commander-macos-arm64
-          - runs-on: macos-latest
+          - runs-on: macos-13
             platform: macos
             arch: x64
             asset_name: ssh-commander-macos-x64

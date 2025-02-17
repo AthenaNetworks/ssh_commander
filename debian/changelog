@@ -21,6 +21,8 @@ ssh-commander (1.0.32) unstable; urgency=medium
       + Removed redundant shell specifications
     - Enhanced error handling and logging across all platforms
 
+ -- Josh Finlay <josh@athenanetworks.com.au>  Sun, 17 Feb 2025 12:32:33 +1000
+
 ssh-commander (1.0.30) unstable; urgency=medium
 
   * Added config sync feature with support for multiple protocols:
@@ -42,6 +44,8 @@ ssh-commander (1.0.30) unstable; urgency=medium
   * Updated post-install message with more features and colorized output
   * Added RPM package support for CentOS/RHEL systems
   * Added shell completion scripts for bash and zsh
+
+ -- Josh Finlay <josh@athenanetworks.com.au>  Sat, 16 Feb 2025 17:00:00 +1000
 
  -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 11:07:03 +1000
 

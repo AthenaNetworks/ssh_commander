@@ -47,8 +47,6 @@ ssh-commander (1.0.30) unstable; urgency=medium
 
  -- Josh Finlay <josh@athenanetworks.com.au>  Sat, 16 Feb 2025 17:00:00 +1000
 
- -- Josh Finlay <josh@athenanetworks.com.au>  Thu, 07 Feb 2025 11:07:03 +1000
-
 ssh-commander (1.0.29) unstable; urgency=medium
 
   * Improved dependency checking in install scripts

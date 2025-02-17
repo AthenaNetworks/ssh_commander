@@ -196,7 +196,7 @@ jobs:
         mkdir -p release
         cp ../ssh-commander_*.deb release/
         cd release
-        DEB_FILE=$(ls ssh-commander_*.deb)
+        DEB_FILE="ssh-commander_${VERSION}_amd64.deb"
         sha256sum "$DEB_FILE" > "$DEB_FILE.sha256"
         cd ..
 
@@ -213,10 +213,6 @@ jobs:
         # Convert .deb to .rpm using alien
         cd release
         DEB_FILE="ssh-commander_${VERSION}_amd64.deb"
-        if [ ! -f "$DEB_FILE" ]; then
-          echo "Error: $DEB_FILE not found"
-          exit 1
-        fi
         sudo alien --to-rpm "$DEB_FILE"
         RPM_FILE="ssh-commander-${VERSION}.el8.x86_64.rpm"
         mv ssh-commander-*.rpm "$RPM_FILE"

@@ -64,6 +64,12 @@ jobs:
           python3 -m pip install --break-system-packages --upgrade pip
           python3 -m pip install --break-system-packages -r requirements.txt
         else
+          # Set architecture flags for macOS
+          if [ "${{ matrix.arch }}" = "x64" ]; then
+            export ARCHFLAGS="-arch x86_64"
+          else
+            export ARCHFLAGS="-arch arm64"
+          fi
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
         fi

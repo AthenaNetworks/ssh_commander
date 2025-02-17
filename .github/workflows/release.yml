@@ -46,6 +46,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        architecture: ${{ matrix.arch == 'x64' && 'x64' || 'arm64' }}
 
     - name: Set up build environment (Linux)
       if: matrix.platform == 'linux'

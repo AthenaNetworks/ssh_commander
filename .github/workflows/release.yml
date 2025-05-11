@@ -265,7 +265,25 @@ jobs:
           
       - name: Create Release Notes
         run: |
+          # Get the version without the 'v' prefix
+          VERSION=${GITHUB_REF_NAME#v}
+          
+          # Create a header for the release notes
           echo "# SSH Commander ${GITHUB_REF_NAME}" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # Include the changes section from the changelog
+          echo "## Changes in this version" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          # For v1.0.33, include the specific bugfix information
+          if [ "$VERSION" = "1.0.33" ]; then
+            echo "- Fixed \"No module named email\" error by including the email module in PyInstaller builds" >> release_notes.md
+            echo "- This resolves an issue where users were unable to run the application due to missing email module" >> release_notes.md
+            echo "- The issue was caused by PyInstaller excluding the email module during the build process" >> release_notes.md
+            echo "- While the main application code doesn't directly import this module, it's required by one of the dependencies" >> release_notes.md
+          fi
+          
           echo "" >> release_notes.md
           echo "## Installation" >> release_notes.md
           echo "" >> release_notes.md

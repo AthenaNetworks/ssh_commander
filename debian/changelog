@@ -1,4 +1,11 @@
-ssh-commander (1.0.32) unstable; urgency=medium
+ssh-commander (1.0.33) unstable; urgency=medium
+
+  * Fixed "No module named email" error:
+    - Removed --exclude-module email flag from all build scripts
+    - Ensures the email module is included in packaged applications
+    - Resolves issue where users couldn't run the application
+
+ ssh-commander (1.0.32) unstable; urgency=medium
 
   * Major CI/CD Pipeline Improvements:
     - Implemented hybrid GitHub Actions runner strategy:

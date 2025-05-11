@@ -38,7 +38,6 @@ PYINSTALLER_OPTS="--onefile --noupx \
     --exclude-module matplotlib \
     --exclude-module tkinter \
     --exclude-module unittest \
-    --exclude-module email \
     --exclude-module http \
     --exclude-module html \
     --exclude-module xml \

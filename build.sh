@@ -13,7 +13,6 @@ pyinstaller --onefile --noupx --name ssh-commander \
     --exclude-module matplotlib \
     --exclude-module tkinter \
     --exclude-module unittest \
-    --exclude-module email \
     --exclude-module http \
     --exclude-module html \
     --exclude-module xml \

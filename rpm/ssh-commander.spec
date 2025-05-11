@@ -34,7 +34,6 @@ It supports server tags for grouping, key-based authentication, and configuratio
   --exclude-module matplotlib \
   --exclude-module tkinter \
   --exclude-module unittest \
-  --exclude-module email \
   --exclude-module http \
   --exclude-module html \
   --exclude-module xml \

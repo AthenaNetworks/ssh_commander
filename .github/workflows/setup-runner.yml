@@ -1,0 +1,98 @@
+name: Setup Self-hosted Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance_type:
+        description: 'EC2 instance type'
+        required: true
+        default: 't3.small'
+      runner_name:
+        description: 'Runner name prefix'
+        required: true
+        default: 'debian-12'
+
+jobs:
+  setup-runner:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ap-southeast-2
+        
+    - name: Launch EC2 Runner
+      id: launch-ec2
+      run: |
+        # Get latest Debian 12 AMI
+        AMI_ID=$(aws ec2 describe-images \
+          --owners 136693071363 \
+          --filters "Name=name,Values=debian-12-amd64-*" \
+          --query 'sort_by(Images, &CreationDate)[-1].ImageId' \
+          --output text)
+        
+        echo "Using Debian 12 AMI: $AMI_ID"
+        
+        # Create security group if it doesn't exist
+        SG_NAME="github-runner-sg"
+        SG_ID=$(aws ec2 describe-security-groups --group-names "$SG_NAME" --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null || echo "")
+        
+        if [ -z "$SG_ID" ]; then
+          echo "Creating security group..."
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name "$SG_NAME" \
+            --description "Security group for GitHub runners" \
+            --query 'GroupId' --output text)
+            
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$SG_ID" \
+            --protocol tcp \
+            --port 22 \
+            --cidr 0.0.0.0/0
+        fi
+        
+        # Create runner startup script
+        cat << 'EOF' > user_data.sh
+        #!/bin/bash
+        apt-get update
+        apt-get install -y curl git python3 python3-pip python3-venv
+        
+        # Create runner user
+        useradd -m -s /bin/bash runner
+        cd /home/runner
+        
+        # Download and install GitHub runner
+        mkdir actions-runner && cd actions-runner
+        curl -o actions-runner-linux-x64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-x64-2.311.0.tar.gz
+        tar xzf ./actions-runner-linux-x64-2.311.0.tar.gz
+        chown -R runner:runner /home/runner/actions-runner
+        
+        # Configure and start runner
+        sudo -u runner ./config.sh --url https://github.com/AthenaNetworks/ssh_commander --token ${{ secrets.RUNNER_TOKEN }} --name "${{ github.event.inputs.runner_name }}-$(date +%s)" --unattended --labels debian-12
+        ./svc.sh install runner
+        ./svc.sh start
+        EOF
+        
+        # Launch EC2 instance
+        INSTANCE_ID=$(aws ec2 run-instances \
+          --image-id "$AMI_ID" \
+          --instance-type "${{ github.event.inputs.instance_type }}" \
+          --security-group-ids "$SG_ID" \
+          --user-data file://user_data.sh \
+          --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=github-runner-${{ github.event.inputs.runner_name }}}]" \
+          --query 'Instances[0].InstanceId' \
+          --output text)
+        
+        echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+        echo "Launched instance $INSTANCE_ID"
+        
+        # Wait for instance to be running
+        aws ec2 wait instance-running --instance-ids "$INSTANCE_ID"
+        echo "Instance is running"

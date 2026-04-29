@@ -6,20 +6,26 @@ _ssh_commander() {
     local -A opt_args
 
     _arguments -C \
+        '--config[Path to config file]:file:_files' \
+        '--no-color[Disable colored output]' \
+        '(-q --quiet)'{-q,--quiet}'[Suppress informational output]' \
+        '(-v --verbose)'{-v,--verbose}'[Enable verbose output]' \
+        '--timeout[SSH connect timeout in seconds]:seconds' \
+        '--strict-host-key-checking[Reject unknown SSH host keys]' \
+        '--version[Show version]' \
         '1: :->command' \
-        '*: :->args' && ret=0
+        '*::: :->args' && ret=0
 
-    # Get available tags from config file
-    local -a tags
+    # Resolve the config file (mirrors what ssh-commander does)
     local config_file="$HOME/.config/ssh-commander/servers.yaml"
-    if [[ -f $config_file ]]; then
-        tags=(${(f)"$(grep -o 'tags:.*' "$config_file" | cut -d'[' -f2 | cut -d']' -f1 | tr ',' '\n' | sed 's/^ *//;s/ *$//' | sort -u)"})
+    if [[ -n ${opt_args[--config]} ]]; then
+        config_file="${opt_args[--config]}"
     fi
 
-    # Get available hostnames from config file
-    local -a hosts
+    local -a tags hosts
     if [[ -f $config_file ]]; then
-        hosts=(${(f)"$(grep 'hostname:' "$config_file" | cut -d':' -f2 | sed 's/^ *//' | sort -u)"})
+        tags=(${(f)"$(grep -oE 'tags:[^#]*' "$config_file" | sed -E 's/tags:[[:space:]]*\[?//; s/\].*$//; s/,/\n/g' | sed 's/^ *//;s/ *$//;s/^["'\'']//;s/["'\'']$//' | sort -u)"})
+        hosts=(${(f)"$(grep -E '^- *hostname:' "$config_file" | sed -E 's/^- *hostname: *//; s/^[\"'\'' ]*//; s/[\"'\'' ]*$//' | sort -u)"})
     fi
 
     case $state in
@@ -28,37 +34,76 @@ _ssh_commander() {
             commands=(
                 'exec:Execute commands on servers'
                 'add:Add a new server'
-                'remove:Remove a server'
+                'edit:Edit an existing server'
+                'remove:Remove one or more servers'
                 'list:List configured servers'
                 'sync:Sync config from URL'
+                'test:Test SSH connectivity to servers'
+                'config-path:Print resolved config file path'
+                'version:Print version'
             )
             _describe -t commands 'ssh-commander commands' commands && ret=0
             ;;
         args)
-            case $words[2] in
+            case $words[1] in
                 exec)
                     _arguments -C \
-                        '-c[Command to execute]:command' \
-                        '--command[Command to execute]:command' \
-                        '-f[Execute commands from file]:filename:_files' \
-                        '--file[Execute commands from file]:filename:_files' \
-                        '--tags[Filter servers by tags]:tag:($tags)' && ret=0
+                        '(-c --command -f --file)'{-c,--command}'[Command to execute]:command' \
+                        '(-f --file -c --command)'{-f,--file}'[File of commands]:filename:_files' \
+                        '(-t --tags)'{-t,--tags}'[Filter servers by tags]:tag:($tags)' \
+                        '(-p --parallel)'{-p,--parallel}'[Run on N servers in parallel]:N' \
+                        '--stop-on-error[Stop on first command failure (with -f)]' && ret=0
+                    ;;
+                add)
+                    _arguments -C \
+                        '--hostname[Server hostname]:hostname' \
+                        '--username[Username]:username' \
+                        '--key-file[SSH key file]:file:_files' \
+                        '--password[Password (insecure)]:password' \
+                        '--password-stdin[Read password from stdin]' \
+                        '--port[SSH port]:port' \
+                        '--tags[Comma-separated tags]:tags' \
+                        '(-y --yes)'{-y,--yes}'[Non-interactive]' && ret=0
+                    ;;
+                edit)
+                    _arguments -C \
+                        '1:hostname:($hosts)' \
+                        '--rename[New hostname]:hostname' \
+                        '--username[Username]:username' \
+                        '--key-file[SSH key file]:file:_files' \
+                        '--password[Password]:password' \
+                        '--password-stdin[Read password from stdin]' \
+                        '--port[SSH port]:port' \
+                        '--tags[Comma-separated tags]:tags:($tags)' \
+                        '--clear-password[Clear stored password]' \
+                        '--clear-key-file[Clear stored key file]' && ret=0
                     ;;
                 remove)
                     _arguments -C \
-                        '*:hostname:($hosts)' && ret=0
+                        '*:hostname:($hosts)' \
+                        '(-y --yes)'{-y,--yes}'[Skip confirmation]' && ret=0
+                    ;;
+                list)
+                    _arguments -C \
+                        '(-t --tag --tags)'{-t,--tag,--tags}'[Filter by tags]:tag:($tags)' \
+                        '(-o --output)'{-o,--output}'[Output format]:format:(pretty hosts yaml json)' && ret=0
+                    ;;
+                test)
+                    _arguments -C \
+                        '(-t --tags)'{-t,--tags}'[Filter by tags]:tag:($tags)' \
+                        '(-p --parallel)'{-p,--parallel}'[Parallel workers]:N' && ret=0
                     ;;
                 sync)
                     _arguments -C \
-                        '--dry-run[Show what would happen]' \
-                        '--verify[Verify config format]' \
+                        '--dry-run[Preview without changes]' \
+                        '--verify[Validate after download]' \
                         '--username[Username for SFTP]:username' \
-                        '--key-file[SSH key file]:key file:_files' \
+                        '--key-file[SSH key file]:file:_files' \
                         '--branch[Git branch]:branch' \
+                        '--keep-backups[Number of backups to keep]:N' \
                         '*:url:_urls' && ret=0
                     ;;
-                add|list)
-                    # No additional arguments
+                config-path|version)
                     ret=0
                     ;;
             esac

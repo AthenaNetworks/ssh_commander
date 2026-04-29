@@ -2,6 +2,63 @@
 
 All notable changes to SSH Commander will be documented in this file.
 
+## [1.0.34] - Unreleased
+
+### Fixed
+- `sync` command was completely non-functional: missing top-level imports for
+  `tempfile`, `urllib.parse`, `urllib.request`, `requests`, `shutil`,
+  `datetime`, plus references to undefined `get_boto3()` / `get_git()` lazy
+  loaders. All have been added.
+- `_load_servers()` returned `None` (instead of `[]`) when the config file did
+  not exist for any non-`add` command, causing `TypeError` crashes.
+- `execute_command()`'s `finally: channel.close()` could fail with
+  `UnboundLocalError` if `open_session()` raised before `channel` was assigned.
+- `_save_servers()` and `sync_config()` could call `os.makedirs('')` when a
+  caller passed a config path with no directory component.
+- `run_commands_from_file()` no longer hard-exits the process via `os._exit(0)`
+  on the success path.
+- `_download_from_sftp()` now honours the port from `sftp://host:port/...` URLs
+  and supports password authentication (via the URL's user info).
+- Config files written by `add`, `edit`, `remove` and `sync` are now created
+  with `0600` permissions (as the README has always claimed) and written
+  atomically via a temp file + rename to avoid corrupting the config on crash.
+- Help with no subcommand now exits with status `0` instead of `1`.
+- Removed unused / duplicated `import os`, `import sys` and `select` imports.
+
+### Added
+- `edit <hostname>` subcommand: change username, key file, password, port,
+  tags, or rename a server in place.
+- `test` subcommand: parallel SSH connectivity check across servers, with
+  optional `--tags` filter.
+- `config-path` subcommand: prints the resolved config file path.
+- `version` subcommand (alias of `--version` for friendlier UX).
+- Non-interactive `add` via flags: `--hostname`, `--username`, `--key-file`,
+  `--password`, `--password-stdin`, `--port`, `--tags`, `-y/--yes`.
+- `remove` now accepts multiple hostnames at once and prompts for confirmation
+  by default (skip with `-y/--yes`).
+- `list` gained `--tag`/`-t` filtering and `--output {pretty,hosts,yaml,json}`
+  for scripting.
+- `exec` gained `-p/--parallel N` for concurrent execution across servers and
+  `--stop-on-error` for command files.
+- Global flags: `--no-color`, `-q/--quiet`, `-v/--verbose`, `--timeout`,
+  `--strict-host-key-checking`.
+- Connection timeout is now applied to `connect`, banner and auth steps
+  (default 10s) so unreachable hosts no longer block indefinitely.
+- `sync` honours `--keep-backups N` to prune old timestamped backups and
+  understands `git+https://` / `git+ssh://` URLs.
+- Updated bash and zsh completions to include all new subcommands and flags
+  and to honour `--config` when discovering hosts and tags.
+
+### Changed
+- Exit codes are now meaningful: `0` success, `1` user/config error,
+  `2` invalid CLI arguments, `3` one or more servers failed,
+  `4` network/DNS error, `130` interrupted.
+- `add` rejects duplicate hostnames and validates required fields before
+  writing.
+- `_connect_to_server` now loads the system known_hosts file and accepts a
+  `strict_host_key_checking` flag (defaults to the previous `AutoAddPolicy`
+  behaviour for backward compatibility).
+
 ## [1.0.33] - 2025-05-11
 
 ### Fixed

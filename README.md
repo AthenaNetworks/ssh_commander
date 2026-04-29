@@ -133,14 +133,44 @@ The configuration file uses YAML format and supports both key-based and password
 ssh-commander add
 ```
 
-2. List configured servers:
+2. Add a server non-interactively (great for scripts/automation):
 ```bash
-ssh-commander list
+ssh-commander add -y \
+    --hostname web1.example.com \
+    --username admin \
+    --key-file ~/.ssh/id_ed25519 \
+    --tags prod,web
 ```
 
-3. Remove a server:
+3. Edit an existing server in place:
 ```bash
-ssh-commander remove web1.example.com
+ssh-commander edit web1.example.com --port 2222 --tags prod,web,frontend
+ssh-commander edit web1.example.com --rename web1-new.example.com
+ssh-commander edit db1.example.com --key-file ~/.ssh/id_ed25519
+```
+
+4. List configured servers (with optional filter and machine-readable output):
+```bash
+ssh-commander list                       # pretty
+ssh-commander list -t prod -o hosts      # one hostname per line
+ssh-commander list -o json               # JSON dump for jq/scripting
+```
+
+5. Remove one or more servers (prompts for confirmation):
+```bash
+ssh-commander remove web1.example.com web2.example.com
+ssh-commander remove old-host.example.com --yes  # no prompt
+```
+
+6. Test SSH connectivity to all (or a subset of) servers:
+```bash
+ssh-commander test
+ssh-commander test -t prod --parallel 8
+```
+
+7. Show the resolved config file path:
+```bash
+ssh-commander config-path
 ```
 
 ### Executing Commands
@@ -152,31 +182,61 @@ ssh-commander exec -c "uptime"
 
 2. Run a command on servers with specific tags:
 ```bash
-ssh-commander exec -c "uptime" -t "prod,web"
+ssh-commander exec -c "uptime" -t prod,web
 ```
 
-3. Run multiple commands from a file:
+3. Run a command across many servers in parallel:
+```bash
+ssh-commander exec -c "uptime" --parallel 8
+```
+
+4. Run multiple commands from a file:
 ```bash
 ssh-commander exec -f commands.txt
 ```
 
-4. Run commands from file on specific tags:
+5. Run commands from file on specific tags, stopping on the first failure:
 ```bash
-ssh-commander exec -f commands.txt -t "staging"
+ssh-commander exec -f commands.txt -t staging --stop-on-error
 ```
 
 Example `commands.txt`:
 ```bash
+# This is a comment - it will be skipped.
 uptime
 df -h
 free -m
 who
 ```
 
-3. Use a different config file:
+6. Use a different config file:
 ```bash
 ssh-commander --config prod-servers.yaml exec -c "docker ps"
 ```
+
+### Global Flags
+
+All commands accept the following global options:
+
+| Flag | Description |
+| --- | --- |
+| `--config FILE` | Override the config file path. |
+| `--timeout SECONDS` | SSH connect/banner/auth timeout (default `10`). |
+| `--no-color` | Disable ANSI color output (also respects piped output where possible). |
+| `-q`, `--quiet` | Suppress informational output (errors still print). |
+| `-v`, `--verbose` | Print extra diagnostic detail (incl. tracebacks on failure). |
+| `--strict-host-key-checking` | Reject unknown SSH host keys instead of auto-adding them. |
+
+### Exit Codes
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Success. |
+| `1` | User error (bad flags, missing config, etc.). |
+| `2` | Invalid CLI argument. |
+| `3` | One or more servers exited non-zero / failed connectivity. |
+| `4` | DNS / network error. |
+| `130` | Interrupted (Ctrl+C). |
 
 ### Real-world Examples
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = '1.0.34'
+__version__ = '1.0.35'
 __author__ = 'Josh Finlay'
 __email__ = 'josh@athenanetworks.com.au'
 __description__ = 'SSH Commander'

@@ -2,7 +2,12 @@
 
 All notable changes to SSH Commander will be documented in this file.
 
-## [1.0.34] - Unreleased
+## [1.0.35] - Unreleased
+
+### Changed
+- Minor maintenance update; bumped build number.
+
+## [1.0.34] - 2026-04-29
 
 ### Fixed
 - `sync` command was completely non-functional: missing top-level imports for

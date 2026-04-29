@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to build (e.g. v1.0.35)'
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   build:
@@ -40,7 +49,8 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-       
+        ref: ${{ env.RELEASE_TAG }}
+
     - name: Set up Python (macOS/Windows)
       if: matrix.platform == 'macos' || matrix.platform == 'windows'
       uses: actions/setup-python@v5
@@ -183,10 +193,10 @@ jobs:
         
         # Fix pip permissions
         sudo chown -R $USER:$USER ~/.cache/pip
-        
-        # Extract version from git tag
-        VERSION=${GITHUB_REF_NAME#v}
-        
+
+        # Extract version from the release tag
+        VERSION="${RELEASE_TAG#v}"
+
         # Build the package
         dpkg-buildpackage -us -uc -b
         
@@ -204,10 +214,10 @@ jobs:
         # Add RPM repository and install build tools
         sudo apt-get update
         sudo apt-get install -y alien rpm
-        
-        # Extract version from git tag
-        VERSION=${GITHUB_REF_NAME#v}
-        
+
+        # Extract version from the release tag
+        VERSION="${RELEASE_TAG#v}"
+
         # Convert .deb to .rpm using alien
         cd release
         DEB_FILE="ssh-commander_${VERSION}_amd64.deb"
@@ -256,7 +266,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -266,10 +278,10 @@ jobs:
       - name: Create Release Notes
         run: |
           # Get the version without the 'v' prefix
-          VERSION=${GITHUB_REF_NAME#v}
-          
+          VERSION="${RELEASE_TAG#v}"
+
           # Create a header for the release notes
-          echo "# SSH Commander ${GITHUB_REF_NAME}" > release_notes.md
+          echo "# SSH Commander ${RELEASE_TAG}" > release_notes.md
           echo "" >> release_notes.md
           
           # Include the changes section from the changelog
@@ -324,6 +336,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TAG }}
           files: |
             artifacts/*.tar.gz
             artifacts/*.zip
